@@ -1,0 +1,31 @@
+# Stage 1: build the TypeScript sources
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json tsconfig.json ./
+RUN npm ci
+
+# Copy source and compile
+COPY src ./src
+RUN npm run build
+
+# Stage 2: create production image
+FROM node:18-alpine AS production
+
+WORKDIR /app
+
+# Only install production dependencies
+COPY package.json package-lock.json ./
+RUN npm ci --only=production
+
+# Copy compiled output
+COPY --from=builder /app/dist ./dist
+
+# Expose application port
+ENV NODE_ENV=production
+EXPOSE 3000
+
+# Run the server
+CMD ["node", "dist/server.js"]

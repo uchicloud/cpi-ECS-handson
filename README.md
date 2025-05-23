@@ -5,3 +5,12 @@
 # ディレクトリ
 
 # AWSサービス
+
+## Docker
+
+バックエンドサービス (backend-hello) の Docker イメージビルドと実行方法:
+
+```bash
+docker build -t backend-hello:latest -f backend-hello/Dockerfile .
+docker run -d -p 3000:3000 --name backend-hello backend-hello:latest
+```

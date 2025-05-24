@@ -5,5 +5,11 @@
     "backend-hello",
     "frontend",
     "backend-chat"
-  ]
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm --workspace=backend-hello run dev\" \"npm --workspace=frontend run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^7.0.0"
+  }
 }

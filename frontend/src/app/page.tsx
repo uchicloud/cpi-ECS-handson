@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 
  // Async component to fetch and render data
 async function Hello() {
-  const res = await fetch("http://localhost:3000/api/hello", { cache: "no-store" });
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/hello`, { cache: "no-store" });
   if (!res.ok) {
     throw new Error("Failed to fetch data");
   }

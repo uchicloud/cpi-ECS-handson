@@ -1,0 +1,9 @@
+{
+  "name": "cpi-ecs-handson",
+  "private": true,
+  "workspaces": [
+    "backend-hello",
+    "frontend",
+    "backend-chat"
+  ]
+}

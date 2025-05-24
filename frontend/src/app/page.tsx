@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import Loading from "./loading";
 
 // Async component to fetch and render main greeting
 async function Hello() {
@@ -36,18 +37,12 @@ async function Proverb() {
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 space-y-4">
-      <Suspense fallback={<div className="text-center">Loading greeting...</div>}>
+      <Suspense fallback={<Loading />}>
         <Hello />
       </Suspense>
 
       <div>
-        <Suspense
-          fallback={
-            <div className="text-center text-sm text-gray-400">
-              Loading proverb...
-            </div>
-          }
-        >
+        <Suspense fallback={<Loading />}>
           <Proverb />
         </Suspense>
       </div>

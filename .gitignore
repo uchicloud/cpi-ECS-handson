@@ -30,7 +30,7 @@ dist-ssr/
 
 # Environment files
 .env
-.env.*.local
+.env.local
 config.json
 !.env.example
 
@@ -71,8 +71,6 @@ build
 *.pem
 # Debug logs
 yarn-error.log*
-# Environment files
-.env*
 # Vercel deployment
 .vercel
 # TypeScript build output

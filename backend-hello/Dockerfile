@@ -19,7 +19,6 @@ WORKDIR /app
 # Only install production dependencies
 COPY package.json ./
 RUN npm install --only=production
-RUN apk add --no-cache curl
 
 # Copy compiled output
 COPY --from=builder /app/dist ./dist

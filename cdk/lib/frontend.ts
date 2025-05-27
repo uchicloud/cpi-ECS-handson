@@ -15,6 +15,7 @@ export interface FrontendStackProps extends cdk.StackProps {
   cloudMapNamespace: servicediscovery.INamespace;
   /** Backend サービス名 (CloudMap 登録時の name) */
   backendServiceName: string;
+  image?: ecs.ContainerImage;
 }
 
 export class FrontendStack extends cdk.Stack {
@@ -45,7 +46,7 @@ export class FrontendStack extends cdk.Stack {
       },
       taskImageOptions: {
         executionRole: execRole,
-        image: ecs.ContainerImage.fromRegistry(repositoryUri),
+        image: props.image ?? ecs.ContainerImage.fromRegistry(repositoryUri),
         containerPort: 3000,
         environment: {
           NEXT_PUBLIC_API_BASE_URL: `http://${backendServiceName}.${cloudMapNamespace.namespaceName}:3000`,

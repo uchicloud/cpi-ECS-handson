@@ -10,11 +10,11 @@ export interface EcrStackProps extends cdk.StackProps {
 export class EcrStack extends cdk.Stack {
   public readonly backendRepositoryUri: string;
   public readonly frontendRepositoryUri: string;
+  public readonly backendChatRepositoryUri: string; // 追加
 
   constructor(scope: Construct, id: string, props: EcrStackProps) {
     super(scope, id, props);
 
-    // props からリポジトリ名プレフィックスを取得
     const owner = props.owner;
 
     // 既存の Backend Hello 用 ECR リポジトリを参照
@@ -32,5 +32,13 @@ export class EcrStack extends cdk.Stack {
       `${owner}-frontend`
     );
     this.frontendRepositoryUri = frontendRepo.repositoryUri;
+
+    // Backend Chat 用 ECR リポジトリを参照
+    const backendChatRepo = ecr.Repository.fromRepositoryName(
+      this,
+      'BackendChatRepo',
+      `${owner}-backend-chat`
+    );
+    this.backendChatRepositoryUri = backendChatRepo.repositoryUri;
   }
 }

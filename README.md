@@ -283,3 +283,285 @@ npm install
 4. ALB の DNS 名をブラウザで開き、フロントエンド表示を確認
 
 以上の手順で、ECR→Backend→サービスディスカバリ→Frontend→ALB の順に少しずつ AWS 上に構築し、各ステップで成果物を体感できます。
+
+#### ステップ6: Backend-chat Fargate サービスの構築
+
+1. **Backend-chat用ECRリポジトリの作成**
+   ```bash
+   aws ecr create-repository \
+     --repository-name ${OWNER}-backend-chat \
+     --region $AWS_REGION
+   ```
+
+2. **Backend-chatのコンテナイメージをビルド＆プッシュ**
+   ```bash
+   cd backend-chat
+   docker build -t backend-chat:latest .
+   cd ..
+   
+   docker tag backend-chat:latest \
+     $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-backend-chat:latest
+
+   docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-backend-chat:latest
+   ```
+
+3. **lib/ecr.ts にbackend-chat用ECRリポジトリ参照を追加**
+   ```typescript
+   // 既存コードに追加
+   export class EcrStack extends cdk.Stack {
+     public readonly backendRepositoryUri: string;
+     public readonly frontendRepositoryUri: string;
+     public readonly backendChatRepositoryUri: string; // 追加
+
+     constructor(scope: Construct, id: string, props: EcrStackProps) {
+       super(scope, id, props);
+
+       const owner = props.owner;
+
+       // 既存のBackend Hello用ECRリポジトリを参照
+       const backendRepo = ecr.Repository.fromRepositoryName(
+         this,
+         'BackendHelloRepo',
+         `${owner}-backend-hello`
+       );
+       this.backendRepositoryUri = backendRepo.repositoryUri;
+
+       // 既存のFrontend用ECRリポジトリを参照
+       const frontendRepo = ecr.Repository.fromRepositoryName(
+         this,
+         'FrontendRepo',
+         `${owner}-frontend`
+       );
+       this.frontendRepositoryUri = frontendRepo.repositoryUri;
+
+       // Backend Chat用ECRリポジトリを参照 (新規追加)
+       const backendChatRepo = ecr.Repository.fromRepositoryName(
+         this,
+         'BackendChatRepo',
+         `${owner}-backend-chat`
+       );
+       this.backendChatRepositoryUri = backendChatRepo.repositoryUri;
+     }
+   }
+   ```
+
+4. **lib/backend-chat.ts を作成**
+   ```typescript
+   import * as cdk from 'aws-cdk-lib';
+   import { Construct } from 'constructs';
+   import * as ec2 from 'aws-cdk-lib/aws-ec2';
+   import * as ecs from 'aws-cdk-lib/aws-ecs';
+   import * as ecsPatterns from 'aws-cdk-lib/aws-ecs-patterns';
+   import * as iam from 'aws-cdk-lib/aws-iam';
+   import * as servicediscovery from 'aws-cdk-lib/aws-servicediscovery';
+   import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
+
+   export interface BackendChatStackProps extends cdk.StackProps {
+     repositoryUri: string;
+     cluster: ecs.ICluster;
+     cloudMapNamespace: servicediscovery.INamespace;
+     environment?: string;
+   }
+
+   export class BackendChatStack extends cdk.Stack {
+     public readonly serviceLoadBalancerDns: string;
+     public readonly backendChatServiceName: string;
+
+     constructor(scope: Construct, id: string, props: BackendChatStackProps) {
+       super(scope, id, props);
+
+       const { repositoryUri, cluster, cloudMapNamespace, environment = 'dev' } = props;
+
+       // タスク実行ロール
+       const execRole = new iam.Role(this, 'BackendChatExecRole', {
+         assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+         managedPolicies: [
+           iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonECSTaskExecutionRolePolicy'),
+           iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonEC2ContainerRegistryReadOnly'),
+         ],
+       });
+
+       // タスクロール
+       const taskRole = new iam.Role(this, 'BackendChatTaskRole', {
+         assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+       });
+
+       // Backend-chat用シークレット作成
+       const chatSecrets = new secretsmanager.Secret(this, 'BackendChatSecrets', {
+         description: `Backend Chat service secrets for ${environment} environment`,
+         secretName: `backend-chat-secrets-${environment}`,
+         secretObjectValue: {
+           DING_SECRET: cdk.SecretValue.unsafePlainText('placeholder-secret'),
+           DING_ENDPOINT: cdk.SecretValue.unsafePlainText('https://ding.endpoint.placeholder'),
+         },
+       });
+
+       chatSecrets.grantRead(taskRole);
+
+       // Fargateサービス作成
+       const fargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'BackendChatService', {
+         cluster,
+         cpu: 256,
+         memoryLimitMiB: 512,
+         desiredCount: 1,
+         cloudMapOptions: {
+           name: 'backend-chat',
+           dnsRecordType: servicediscovery.DnsRecordType.A,
+           dnsTtl: cdk.Duration.seconds(30),
+           cloudMapNamespace,
+         },
+         taskImageOptions: {
+           executionRole: execRole,
+           taskRole: taskRole,
+           image: ecs.ContainerImage.fromRegistry(repositoryUri),
+           containerPort: 3001,
+           secrets: {
+             DING_SECRET: ecs.Secret.fromSecretsManager(chatSecrets, 'DING_SECRET'),
+             DING_ENDPOINT: ecs.Secret.fromSecretsManager(chatSecrets, 'DING_ENDPOINT'),
+           },
+           environment: {
+             NODE_ENV: 'production',
+             PORT: '3001',
+           },
+         },
+         publicLoadBalancer: true,
+       });
+
+       this.backendChatServiceName = 'backend-chat';
+
+       // ヘルスチェック設定
+       fargateService.targetGroup.configureHealthCheck({
+         path: '/health',
+         healthyHttpCodes: '200',
+       });
+
+       this.serviceLoadBalancerDns = fargateService.loadBalancer.loadBalancerDnsName;
+
+       // 出力
+       new cdk.CfnOutput(this, 'ChatSecretsArn', {
+         value: chatSecrets.secretArn,
+         description: 'Backend Chat Secrets Manager ARN',
+       });
+
+       new cdk.CfnOutput(this, 'BackendChatLoadBalancerDNS', {
+         value: this.serviceLoadBalancerDns,
+         description: 'Backend Chat Load Balancer DNS Name',
+       });
+     }
+   }
+   ```
+
+5. **lib/frontend.ts にbackendChatServiceNameパラメータを追加**
+   ```typescript
+   export interface FrontendStackProps extends cdk.StackProps {
+     repositoryUri: string;
+     cluster: ecs.ICluster;
+     cloudMapNamespace: servicediscovery.INamespace;
+     backendServiceName: string;
+     backendChatServiceName: string; // 追加
+   }
+
+   export class FrontendStack extends cdk.Stack {
+     constructor(scope: Construct, id: string, props: FrontendStackProps) {
+       const { repositoryUri, cluster, cloudMapNamespace, backendServiceName, backendChatServiceName } = props;
+       
+       // 環境変数にbackend-chatサービス名も追加
+       environment: {
+         NODE_ENV: 'production',
+         NEXT_PUBLIC_BACKEND_SERVICE: backendServiceName,
+         NEXT_PUBLIC_BACKEND_CHAT_SERVICE: backendChatServiceName, // 追加
+       },
+     }
+   }
+   ```
+
+6. **bin/handson.ts にBackendChatStackを追加**
+   ```typescript
+   import { BackendChatStack } from '../lib/backend-chat';
+
+   // Backend Chat スタック（新規追加）
+   const backendChatStack = new BackendChatStack(app, 'BackendChatStack', {
+     env: {
+       account: process.env.AWS_ACCOUNT_ID,
+       region: process.env.AWS_REGION,
+     },
+     repositoryUri: ecrStack.backendChatRepositoryUri,
+     cluster: backendStack.cluster,
+     cloudMapNamespace: backendStack.cloudMapNamespace,
+     environment,
+   });
+
+   // Frontend スタックにbackendChatServiceNameを追加
+   const frontendStack = new FrontendStack(app, 'FrontendStack', {
+     env: {
+       account: process.env.AWS_ACCOUNT_ID,
+       region: process.env.AWS_REGION,
+     },
+     repositoryUri: ecrStack.frontendRepositoryUri,
+     cluster: backendStack.cluster,
+     cloudMapNamespace: backendStack.cloudMapNamespace,
+     backendServiceName: backendStack.backendServiceName,
+     backendChatServiceName: backendChatStack.backendChatServiceName, // 追加
+   });
+   ```
+
+7. **ビルドとデプロイ**
+   ```bash
+   cd cdk
+   npm run build
+   cdk deploy BackendChatStack
+   ```
+
+8. **シークレットの実際の値を設定**
+   ```bash
+   aws secretsmanager update-secret \
+     --secret-id backend-chat-secrets-dev \
+     --secret-string '{
+       "DING_SECRET": "your-actual-ding-secret",
+       "DING_ENDPOINT": "https://your-actual-ding-endpoint"
+     }' \
+     --region $AWS_REGION
+   ```
+
+9. **動作確認**
+   ```bash
+   # Backend-chatのヘルスチェック
+   curl -f http://<BACKEND_CHAT_ALB_DNS>/health
+   ```
+
+これでBackend-chatサービスがSecrets Managerを使用してセキュアに構築され、他のサービスと連携できる状態になります。
+
+#### Appendix:
+1. シークレットの確認
+```bash
+# シークレット一覧を表示
+aws secretsmanager list-secrets --region $AWS_REGION
+
+# 特定のシークレットの詳細を確認
+aws secretsmanager describe-secret \
+  --secret-id backend-chat-secrets \
+  --region $AWS_REGION
+```
+
+2. シークレットの登録
+```bash
+aws secretsmanager create-secret \
+  --name backend-chat-secrets \
+  --description "Backend Chat service secrets for dev environment" \
+  --secret-string '{
+    "DING_SECRET": "your-actual-ding-secret",
+    "DING_ENDPOINT": "https://your-actual-ding-endpoint"
+  }' \
+  --region $AWS_REGION
+```
+
+3. シークレットの更新
+```bash
+aws secretsmanager update-secret \
+  --secret-id backend-chat-secrets \
+  --secret-string '{
+    "DING_SECRET": "your-actual-ding-secret",
+    "DING_ENDPOINT": "https://your-actual-ding-endpoint"
+  }' \
+  --region $AWS_REGION
+```

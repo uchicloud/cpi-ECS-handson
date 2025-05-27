@@ -1,5 +1,5 @@
 # Stage 1: build the TypeScript sources
-FROM node:18-alpine AS builder
+FROM node:23 AS builder
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY src ./src
 RUN npm run build
 
 # Stage 2: create production image
-FROM node:18-alpine AS production
+FROM node:23 AS production
 
 WORKDIR /app
 

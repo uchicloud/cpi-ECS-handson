@@ -55,3 +55,25 @@ gout/
 awscliv2.zip
 aws/
 aws-cli/
+# Frontend and monorepo patterns
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+# Next.js build outputs
+.next/
+out/
+build
+# Miscellaneous
+*.pem
+# Debug logs
+yarn-error.log*
+# Environment files
+.env*
+# Vercel deployment
+.vercel
+# TypeScript build output
+next-env.d.ts

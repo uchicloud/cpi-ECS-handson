@@ -1,5 +1,5 @@
 # Stage 1: build the TypeScript sources
-FROM node:18-alpine AS builder
+FROM node:23 AS builder
 
 WORKDIR /app
 
@@ -12,13 +12,14 @@ COPY src ./src
 RUN npm run build
 
 # Stage 2: create production image
-FROM node:18-alpine AS production
+FROM node:23-alpine AS production
 
 WORKDIR /app
 
 # Only install production dependencies
-COPY package.json package-lock.json ./
-RUN npm ci --only=production
+COPY package.json ./
+RUN npm install --only=production
+RUN apk add --no-cache curl
 
 # Copy compiled output
 COPY --from=builder /app/dist ./dist

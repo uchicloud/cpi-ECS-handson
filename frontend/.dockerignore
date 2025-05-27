@@ -1,0 +1,7 @@
+# Exclude environment local files
+.env*
+# Node modules and build artifacts
+node_modules
+.next
+# Logs
+npm-debug.log*

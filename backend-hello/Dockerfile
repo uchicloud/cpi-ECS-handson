@@ -12,7 +12,7 @@ COPY src ./src
 RUN npm run build
 
 # Stage 2: create production image
-FROM node:23 AS production
+FROM node:23-alpine AS production
 
 WORKDIR /app
 

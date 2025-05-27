@@ -17,7 +17,6 @@ ENV NODE_ENV=production
 # Copy built artifacts and dependencies
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
 COPY package.json ./
 
 EXPOSE 3000

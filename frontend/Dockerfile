@@ -5,6 +5,9 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install
 
+ARG NEXT_PUBLIC_DING_URL
+ENV NEXT_PUBLIC_DING_URL=$NEXT_PUBLIC_DING_URL
+
 COPY . .
 RUN npm run build
 

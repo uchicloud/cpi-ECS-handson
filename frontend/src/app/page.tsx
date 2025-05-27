@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import Loading from "./loading";
+import SendChat from "./component/SendChat";
 
 // Async component to fetch and render main greeting
 async function Hello() {
@@ -34,6 +35,7 @@ async function Proverb() {
   return <p className="text-sm text-gray-400">{data.message}</p>;
 }
 
+
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 space-y-4">
@@ -46,6 +48,7 @@ export default function Home() {
           <Proverb />
         </Suspense>
       </div>
+      <SendChat />
     </main>
   );
 }

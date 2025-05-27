@@ -3,5 +3,20 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "scripts": {}
+  "scripts": {
+    "dev": "node --env-file=.env.local --loader ts-node/esm src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.18",
+    "@types/express": "^5.0.2",
+    "@types/node": "^22.15.21",
+    "typescript": "^5.8.3"
+  }
 }

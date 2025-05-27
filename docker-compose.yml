@@ -12,11 +12,20 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+  ding:
+    build:
+      context: ./backend-chat
+      dockerfile: Dockerfile
+    ports:
+      - "5200:5200"
+    env_file:
+      - ./backend-chat/.env.local
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_DING_URL=http://localhost:5200
     ports:
       - "3001:3000"
     environment:

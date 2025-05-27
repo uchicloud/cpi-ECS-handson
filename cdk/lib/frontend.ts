@@ -2,7 +2,9 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as ecsPatterns from 'aws-cdk-lib/aws-ecs-patterns';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as servicediscovery from 'aws-cdk-lib/aws-servicediscovery';
+import * as ec2 from 'aws-cdk-lib/aws-ec2'; // 追加
 
 export interface FrontendStackProps extends cdk.StackProps {
   /** ECR にプッシュされたフロントエンドイメージの URI */
@@ -16,13 +18,23 @@ export interface FrontendStackProps extends cdk.StackProps {
 }
 
 export class FrontendStack extends cdk.Stack {
+  public readonly serviceLoadBalancerDns: string;
+
   constructor(scope: Construct, id: string, props: FrontendStackProps) {
     super(scope, id, props);
 
-    const { repositoryUri, cluster, cloudMapNamespace, backendServiceName } = props;
+    const { repositoryUri, cluster, cloudMapNamespace, backendServiceName } = props; // vpc追加
 
+    // タスク実行ロールに ECR プル権限を付与
+    const execRole = new iam.Role(this, 'FrontendExecRole', {
+      assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonECSTaskExecutionRolePolicy'),
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonEC2ContainerRegistryReadOnly'),
+      ],
+    });
     // Frontend Fargate サービスを作成し、ALB と CloudMap を設定
-    const service = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'FrontendService', {
+    const fargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'FrontendService', {
       cluster,
       cpu: 256,
       memoryLimitMiB: 512,
@@ -32,6 +44,7 @@ export class FrontendStack extends cdk.Stack {
         cloudMapNamespace, 
       },
       taskImageOptions: {
+        executionRole: execRole,
         image: ecs.ContainerImage.fromRegistry(repositoryUri),
         containerPort: 3000,
         environment: {
@@ -42,9 +55,13 @@ export class FrontendStack extends cdk.Stack {
     });
 
     // ヘルスチェック設定: /health をチェック
-    service.targetGroup.configureHealthCheck({
-      path: '/health',
+    fargateService.targetGroup.configureHealthCheck({
+      path: '/',
       healthyHttpCodes: '200',
     });
+
+    // ALB の DNS 名をエクスポート
+    this.serviceLoadBalancerDns = fargateService.loadBalancer.loadBalancerDnsName;
+
   }
 }

@@ -20,7 +20,7 @@ export class BackendHelloStack extends cdk.Stack {
     super(scope, id, props);
 
     // VPC と ECS クラスターを作成
-    const vpc = new ec2.Vpc(this, 'BackendVpc', { maxAzs: 2, natGateways: 1 });
+    const vpc = new ec2.Vpc(this, 'ECSStudyVPC', { maxAzs: 2, natGateways: 1 });
     const cluster = new ecs.Cluster(this, 'BackendCluster', { vpc });
     this.cluster = cluster;
 
@@ -38,7 +38,7 @@ export class BackendHelloStack extends cdk.Stack {
     });
 
     // Fargate サービスを作成し、ALB と CloudMap を設定
-    const pattern = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'BackendHelloService', {
+    const fargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'BackendHelloService', {
       cluster,
       cpu: 256,
       memoryLimitMiB: 512,
@@ -56,16 +56,21 @@ export class BackendHelloStack extends cdk.Stack {
       },
       publicLoadBalancer: true,
     });
-    const service = pattern.service;
-    this.backendServiceName = service.serviceName;
+    fargateService.service.connections.allowFrom(
+      ec2.Peer.ipv4(vpc.vpcCidrBlock),
+      ec2.Port.tcp(3000),
+      'Allow traffic from VPC to backend service',
+    );
+
+    this.backendServiceName = 'backend-hello';
 
     // ヘルスチェックを /health に設定
-    pattern.targetGroup.configureHealthCheck({
+    fargateService.targetGroup.configureHealthCheck({
       path: '/health',
       healthyHttpCodes: '200',
     });
 
     // ALB の DNS 名をエクスポート
-    this.serviceLoadBalancerDns = pattern.loadBalancer.loadBalancerDnsName;
+    this.serviceLoadBalancerDns = fargateService.loadBalancer.loadBalancerDnsName;
   }
 }

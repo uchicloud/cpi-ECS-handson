@@ -62,7 +62,11 @@ sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --u
 
 ```bash
 export OWNER=<自分とわかる文字列>    # ECRリポジトリ名のプレフィックス
+```
+```bash
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+```
+```bash
 export AWS_REGION=$(aws configure get region)
 ```
 
@@ -78,8 +82,8 @@ export AWS_REGION=$(aws configure get region)
    ```
 2. ECR にログイン  
    ```bash
-   aws ecr get-login-password --region $AWS_REGION \
-     | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+   aws ecr get-login-password --region $AWS_REGION |
+    docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
    ```
 3. イメージをビルド  
    ```bash
@@ -94,7 +98,6 @@ export AWS_REGION=$(aws configure get region)
 
    docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-backend-hello:latest
    ```
-5. ECR にプッシュされたイメージ URI をメモ
 
 ### フロントエンドのコンテナイメージをECRにプッシュしてみよう
 1. ECR リポジトリを作成  
@@ -103,25 +106,19 @@ export AWS_REGION=$(aws configure get region)
      --repository-name ${OWNER}-frontend \
      --region $AWS_REGION
    ```
-2. ECR にログイン  
-   ```bash
-   aws ecr get-login-password --region $AWS_REGION \
-     | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-   ```
-3. イメージをビルド  
+2. イメージをビルド  
    ```bash
    cd frontend
    docker build -t frontend:latest .
    cd ..
    ```
-4. タグ付け＆プッシュ  
+3. タグ付け＆プッシュ  
    ```bash
    docker tag frontend:latest \
      $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-frontend:latest
 
    docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-frontend:latest
    ```
-5. ECR にプッシュされたイメージ URI をメモ
 
 ### 2. CDKを使って自動化されたデプロイワークフローを作成してみよう
 

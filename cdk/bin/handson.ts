@@ -7,8 +7,13 @@ import { FrontendStack } from '../lib/frontend';
 
 const app = new cdk.App();
 
-// ECR リポジトリスタック
-const ecrStack = new EcrStack(app, 'EcrStack');
+const owner = process.env.OWNER;
+if (!owner) {
+  throw new Error('環境変数 OWNER が設定されていません');
+}
+
+// ECR リポジトリスタック: 既存リポジトリ参照用
+const ecrStack = new EcrStack(app, 'EcrStack', { owner });
 
 // Backend Hello Fargate スタック
 const backendStack = new BackendHelloStack(app, 'BackendHelloStack', {
@@ -19,12 +24,27 @@ const backendStack = new BackendHelloStack(app, 'BackendHelloStack', {
   repositoryUri: ecrStack.backendRepositoryUri,
 });
 
-// Frontend Fargate スタック
-new FrontendStack(app, 'FrontendStack', {
+const frontendProps = {
   env: {
     account: process.env.AWS_ACCOUNT_ID,
     region: process.env.AWS_REGION,
   },
   repositoryUri: ecrStack.frontendRepositoryUri,
-  backendEndpoint: backendStack.serviceLoadBalancerDns,
-});
+  cluster: backendStack.cluster,
+  cloudMapNamespace: backendStack.cloudMapNamespace,
+  backendServiceName: backendStack.backendServiceName,
+} as const;
+
+const frontendStack = new FrontendStack(app, 'FrontendStack', frontendProps);
+
+// 出力: Backend と Frontend の ALB DNS 名
+// new cdk.CfnOutput(app, 'BackendLoadBalancerDns', {
+//   value: backendStack.serviceLoadBalancerDns,
+//   description: 'Backend Hello Fargate Service Load Balancer DNS',
+//   exportName: 'BackendLoadBalancerDns',
+// });
+// new cdk.CfnOutput(app, 'FrontendLoadBalancerDns', {
+//   value: frontendStack.serviceLoadBalancerDns,
+//   description: 'Frontend Fargate Service Load Balancer DNS',
+//   exportName: 'FrontendLoadBalancerDns',
+// });

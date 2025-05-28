@@ -124,30 +124,58 @@ $env:AWS_REGION=$(aws configure get region)
 
 ### 1. **backend-hello** のコンテナイメージをECRにプッシュしてみよう
 
-1. ECR リポジトリを作成  
-   ```bash
-   aws ecr create-repository \
-     --repository-name ${OWNER}-backend-hello \
-     --region $AWS_REGION
-   ```
-2. ECR にログイン  
-   ```bash
-   aws ecr get-login-password --region $AWS_REGION |
-    docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-   ```
-3. イメージをビルド  
-   ```bash
-   cd backend-hello
-   docker build -t backend-hello:latest .
-   cd ..
-   ```
-4. タグ付け＆プッシュ  
-   ```bash
-   docker tag backend-hello:latest \
-     $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-backend-hello:latest
+1. ECR リポジトリを作成
 
-   docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-backend-hello:latest
-   ```
+    *Linux*
+    ```bash
+    aws ecr create-repository \
+      --repository-name ${OWNER}-backend-hello \
+      --region $AWS_REGION
+    ```
+    *Windows*
+    ```pwsh
+    aws ecr create-repository `
+      --repository-name $env:OWNER-backend-hello `
+      --region $env:AWS_REGION
+    ```
+
+2. ECR にログイン
+
+    *Linux*
+    ```bash
+    aws ecr get-login-password --region $AWS_REGION |
+    docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+    ```
+    *Windows*
+    ```pwsh
+    aws ecr get-login-password --region $env:AWS_REGION |
+    docker login --username AWS --password-stdin $env:AWS_ACCOUNT_ID.dkr.ecr.$env:AWS_REGION.amazonaws.com
+    ```
+
+3. イメージをビルド
+
+    ```bash
+    cd backend-hello
+    docker build -t backend-hello:latest .
+    cd ..
+    ```
+
+4. タグ付け＆プッシュ
+
+    *Linux*
+    ```bash
+    docker tag backend-hello:latest \
+      $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-backend-hello:latest
+
+    docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-backend-hello:latest
+    ```
+    *Windows*
+    ```bash
+    docker tag backend-hello:latest `
+      $env:AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${env:OWNER}-backend-hello:latest
+
+    docker push $env:AWS_ACCOUNT_ID.dkr.ecr.$env:AWS_REGION.amazonaws.com/${env:OWNER}-backend-hello:latest
+    ```
 
 ### フロントエンドのコンテナイメージをECRにプッシュしてみよう
 1. ECR リポジトリを作成  

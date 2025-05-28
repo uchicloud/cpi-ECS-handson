@@ -9,12 +9,12 @@
 - **frontend**: フロントエンドアプリケーション (作成予定)  
 - **backend-chat**: API サービス (作成予定)
 
-## 前提条件
+## 準備
 このリポジトリはLinux環境で動かすことを想定しています。  
 WindowsユーザーはWSLの設定を完了させてください。  
 VSCodeで開発する場合は **WSLエクステンション** をインストールしてください。
 
-### セットアップ
+### npmパッケージのインストール
 
 1. リポジトリルートで依存関係をインストール  
    ```bash
@@ -22,6 +22,13 @@ VSCodeで開発する場合は **WSLエクステンション** をインスト�
    ```
 
 ### コンテナ動作確認
+今回のハンズオンでデプロイする簡易なウェブシステムを一度ローカルで動かしてみましょう
+
+- 準備
+  backend-chat/.env.exampleを`.env.local`にリネームする
+  ```bash
+  cp backend-chat/.env.example backend-chat/.env.local
+  ```
 
 1. リポジトリルートで以下を実行:  
    ```bash
@@ -47,6 +54,7 @@ VSCodeで開発する場合は **WSLエクステンション** をインスト�
 下記の手順で AWS CLI v2 をインストールします。
 
 ```bash
+sudo apt install -y unzip
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
 sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
@@ -139,12 +147,11 @@ cdk/
 ├── bin/
 │   └── cdk.ts                 # CDK アプリケーションのエントリポイント
 ├── lib/
+│   ├── backend-chat.ts        # backend-chat Fargate サービス定義: Dingチャットのメッセージ送信エンドポイントを叩く
+│   ├── backend-hello.ts       # backend-hello Fargate サービス定義: 単純なjsonを返す
 │   ├── ecr.ts                 # ECR リポジトリ定義
-│   ├── backend-hello.ts       # Backend Fargate サービス定義
-│   ├── service-discovery.ts   # CloudMap サービスディスカバリ定義
-│   └── frontend.ts            # Frontend Fargate サービス & ALB 定義
-├── package.json
-└── tsconfig.json
+│   └── frontend.ts            # frontend Fargate サービス 定義
+└── cdk.json
 ```
 
 #### ステップ 1: 初期セットアップ (cdk ディレクトリ内で実行)

@@ -14,7 +14,7 @@
 コンテナを起動するためWindowsユーザーはWSLの設定を完了させてください。  
 
 ### インストール
-- node
+- Node.js
 
   *Linux*
   ```bash
@@ -464,7 +464,10 @@ Cloud Mapの内部用DNSとインスタンスの自動追加を設定してい�
     npx cdk deploy $env:OWNER-BackendChatStack $env:OWNER-FrontendStack
     ```
 
-### 全部消そう
+実は今まで機能していなかったメッセージ送信ボタンが動くようになりました。  
+テキスト入力欄に好きなメッセージを入れて「Send」ボタンでbotアカウントにしゃべらせることができます。
+
+### 後片付け
 CDKコードはCloudForamtionのスタックとしてAWS上で管理されています。  
 スタックを削除するとその構成リソースも全て削除されるため、簡単に不要リソースを処分できます。
 
@@ -473,7 +476,7 @@ CDKコードはCloudForamtionのスタックとしてAWS上で管理されてい
 cd cdk
 echo y | npx cdk destroy --all
 ```
->自分のECRリポジトリの削除
+>手動で作ったECRリポジトリの削除
 
 お疲れさまでした。
 ### Appendix:

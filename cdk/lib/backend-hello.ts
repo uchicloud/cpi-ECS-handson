@@ -10,8 +10,11 @@ export interface BackendHelloStackProps extends cdk.StackProps {
   repositoryUri: string;
 }
 
+const owner = process.env.OWNER;
+if (!owner) {
+  throw new Error('環境変数 OWNER が設定されていません');
+}
 export class BackendHelloStack extends cdk.Stack {
-  public readonly serviceLoadBalancerDns: string;
   public readonly cluster: ecs.ICluster;
   public readonly cloudMapNamespace: servicediscovery.INamespace;
   public readonly backendServiceName: string;
@@ -19,7 +22,7 @@ export class BackendHelloStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BackendHelloStackProps) {
     super(scope, id, props);
 
-      // 共有VPCから値をインポート
+    // 共有VPCから値をインポート
     const vpc = ec2.Vpc.fromLookup(this, 'SharedVpc', {
       tags: {
         Name: 'HandsOn-VPC',
@@ -30,8 +33,8 @@ export class BackendHelloStack extends cdk.Stack {
     const cluster = new ecs.Cluster(this, 'BackendCluster', { vpc });
     this.cluster = cluster;
 
-    // CloudMap namespace を作成
-    const namespace = cluster.addDefaultCloudMapNamespace({ name: 'svc.local' });
+    // Cloud Map namespace を作成
+    const namespace = cluster.addDefaultCloudMapNamespace({ name: `${owner}.svc.local` });
     this.cloudMapNamespace = namespace;
 
     // タスク実行ロールに ECR プル権限を付与
@@ -43,7 +46,7 @@ export class BackendHelloStack extends cdk.Stack {
       ],
     });
 
-    // Fargate サービスを作成し、ALB と CloudMap を設定
+    // Fargate サービスを作成し、ALB と Cloud Map を設定
     const fargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'BackendHelloService', {
       cluster,
       cpu: 256,
@@ -60,7 +63,7 @@ export class BackendHelloStack extends cdk.Stack {
         image: ecs.ContainerImage.fromRegistry(props.repositoryUri),
         containerPort: 3000,
       },
-      publicLoadBalancer: true,
+      publicLoadBalancer: false,
     });
     fargateService.service.connections.allowFrom(
       ec2.Peer.ipv4(vpc.vpcCidrBlock),
@@ -75,8 +78,5 @@ export class BackendHelloStack extends cdk.Stack {
       path: '/health',
       healthyHttpCodes: '200',
     });
-
-    // ALB の DNS 名をエクスポート
-    this.serviceLoadBalancerDns = fargateService.loadBalancer.loadBalancerDnsName;
   }
 }

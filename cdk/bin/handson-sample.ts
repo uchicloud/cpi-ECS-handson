@@ -6,6 +6,7 @@ import { BackendHelloStack } from '../lib/backend-hello';
 import { BackendChatStack } from '../lib/backend-chat';
 import { FrontendStack } from '../lib/frontend';
 
+
 const app = new cdk.App();
 
 const owner = process.env.OWNER;
@@ -25,7 +26,7 @@ const ecrStack = new EcrStack(app, `${owner}-EcrStack`, {
 });
 
 // Backend スタック
-const backendStack = new BackendHelloStack(app, `${owner}-BackendStack`, {
+const backendStack = new BackendHelloStack(app, `${owner}-BackendHelloStack`, {
   env: {
     account: process.env.AWS_ACCOUNT_ID,
     region: process.env.AWS_REGION,
@@ -33,7 +34,7 @@ const backendStack = new BackendHelloStack(app, `${owner}-BackendStack`, {
   repositoryUri: ecrStack.backendRepositoryUri,
 });
 
-// Backend Chat スタック（新規追加）
+// Backend Chat スタック
 const backendChatStack = new BackendChatStack(app, `${owner}-BackendChatStack`, {
   env: {
     account: process.env.AWS_ACCOUNT_ID,
@@ -51,7 +52,7 @@ const backendChatStack = new BackendChatStack(app, `${owner}-BackendChatStack`, 
 const backendServiceName = backendStack.backendServiceName;
 const backendChatServiceName = backendChatStack.backendChatServiceName;
 
-// Frontend スタック
+
 const frontendStack = new FrontendStack(app, `${owner}-FrontendStack`, {
   env: {
     account: process.env.AWS_ACCOUNT_ID,
@@ -63,4 +64,3 @@ const frontendStack = new FrontendStack(app, `${owner}-FrontendStack`, {
   backendServiceName: backendServiceName,
   backendChatServiceName: backendChatServiceName,
 });
-

@@ -5,9 +5,9 @@
 
 # ディレクトリ構成
 
-- **backend-hello**: TypeScript + Express ベースのサンプルサーバー  
-- **frontend**: フロントエンドアプリケーション (作成予定)  
-- **backend-chat**: API サービス (作成予定)
+- **frontend**: フロントエンドサーバー (Next.js)
+- **backend-hello**: ハードコードされたjsonを返す (Express.js) 
+- **backend-chat**: ユーザー入力を受付け、外部と通信する (Express.js)
 
 ## 前提条件
 このドキュメントに記載したコマンドは**bash**または**powershell**での動作を想定しています。  
@@ -33,6 +33,7 @@
 
   *Linux*
   ```bash
+  sudo apt install -y unzip
   curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_1.zip" -o "awscliv1.zip"
   unzip awscliv1.zip
   sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
@@ -59,7 +60,7 @@
 1. `aws configure` を実行  
 1. Access Key ID を入力  
 1. Secret Access Key を入力  
-1. デフォルトリージョンを入力 (例: ap-northeast-1)  
+1. デフォルトリージョンを入力 (ap-northeast-1)  
 1. 出力フォーマットを入力 (例: text)  
 
 - **認証情報を持っていない場合**  
@@ -83,7 +84,7 @@ $env:AWS_REGION=$(aws configure get region)
 ```
 
 ## コンテナにトライ
-今回のハンズオンでデプロイする簡易なウェブシステムを一度ローカルで動かしてみましょう。
+今回のハンズオンでECS上にデプロイする簡易なウェブシステムを一度ローカルで動かしてみましょう。
 
 - 準備
 
@@ -98,7 +99,7 @@ $env:AWS_REGION=$(aws configure get region)
     ```bash
     docker-compose up -d
     ```
-1. サービスの起動状況を確認:
+1. サービスの稼働状態を確認:
 
     ```bash
     docker-compose ps
@@ -122,7 +123,7 @@ $env:AWS_REGION=$(aws configure get region)
     一連のコマンドでコンテナの起動と終了、ヘルスチェックを手動で行った  
    
     >絶対に止めてはいけないコンテナがあったり、ヘルスチェックのエンドポイントがバラバラだったら大変すぎ   
-    >**ECS**はそういうマネージメントを自動化し、状況に合わせてコンテナの数を増減してくれるすごいやつ
+    >**ECS**はそういうマネージメントを自動化し、状況に合わせてコンテナを増減してくれるすごいやつ
 
 
 ## ハンズオン手順
@@ -177,7 +178,7 @@ $env:AWS_REGION=$(aws configure get region)
     *Windows*
     ```bash
     docker tag backend-hello:latest `
-      $env:AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${env:OWNER}-backend-hello:latest
+      "$env:AWS_ACCOUNT_ID.dkr.ecr.$env:AWS_REGION.amazonaws.com/${env:OWNER}-backend-hello:latest"
 
     docker push "$env:AWS_ACCOUNT_ID.dkr.ecr.$env:AWS_REGION.amazonaws.com/${env:OWNER}-backend-hello:latest"
     ```
@@ -217,13 +218,13 @@ $env:AWS_REGION=$(aws configure get region)
     *Windows*
     ```pwsh
     docker tag frontend:latest `
-      $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${env:OWNER}-frontend:latest
+      "$env:AWS_ACCOUNT_ID.dkr.ecr.$env:AWS_REGION.amazonaws.com/${env:OWNER}-frontend:latest"
 
     docker push "$env:AWS_ACCOUNT_ID.dkr.ecr.$env:AWS_REGION.amazonaws.com/${env:OWNER}-frontend:latest"
     ```
 
 
-### 1. CDKを使って自動化されたデプロイワークフローを作成してみよう
+### CDKを使って自動化されたデプロイワークフローを作成してみよう
 
 > **注意**: 以下の CDK コマンドは必ず `cdk` ディレクトリ内で実行してください。
 
@@ -237,12 +238,12 @@ $env:AWS_REGION=$(aws configure get region)
 ```
 cdk/
 ├── bin/
-│   └── handson.ts                 # CDK アプリケーションのエントリポイント
+│   └── handson.ts          # CDK アプリケーションのエントリポイント
 ├── lib/
-│   ├── backend-chat.ts        # backend-chat Fargate サービス定義: Dingチャット用
-│   ├── backend-hello.ts       # backend-hello Fargate サービス定義: 単純なjsonを返す
-│   ├── ecr.ts                 # ECR リポジトリ定義
-│   └── frontend.ts            # frontend Fargate サービス 定義
+│   ├── backend-chat.ts     # backend-chat Fargate サービス定義: Dingチャット用
+│   ├── backend-hello.ts    # backend-hello Fargate サービス定義: 単純なjsonを返す
+│   ├── ecr.ts              # ECR リポジトリ定義
+│   └── frontend.ts         # frontend Fargate サービス 定義
 └── cdk.json
 ```
 
@@ -255,7 +256,7 @@ npm install
 
 #### ステップ 2: ECRリポジトリの構成
 
-1. `bin/ecs-handson.ts` に `EcrStack` を追加:
+1. `bin/handson.ts` に `EcrStack` を追加:
 
     ```typescript
     import { EcrStack } from '../lib/ecr';
@@ -287,7 +288,7 @@ npm install
 
 #### ステップ 3: Backend-hello Fargate サービスの構築
 
-1. `bin/ecs-handson.ts` を開き、`EcrStack` の後に `BackendHelloStack` を追加:  
+1. `bin/handson.ts` を開き、`EcrStack` の後に `BackendHelloStack` を追加:  
 
     ```typescript
     import { BackendHelloStack } from '../lib/backend-hello';
@@ -318,16 +319,16 @@ npm install
 #### ステップ 4: Cloud Map サービスディスカバリの確認
 
 先ほどデプロイした`ユーザー名-BackendHelloStack`に対して、frontend Fargateサービスから経路を作成することを考えてみてください。  
-コンテナ間ではIPアドレスやドメイン名などを使って接続先を指定する必要があります。  
+コンテナ間ではIPアドレスやドメイン名を使って接続先を指定する必要があります。  
 
-このように分散したサービス同士の探索と接続の解決を図るプロセスを**サービスディスカバリ**と呼び、AWSでは**Cloud Map**というサービスが提供されています。  
+このように分散したサービス同士の探索と接続の解決を図るプロセスを**サービスディスカバリ**と呼び、AWSでは**Cloud Map**というサービスがこれのために提供されています。  
 
 >`lib/backend-hello.ts`を見てみましょう。  
 Cloud Mapの内部用DNSとインスタンスの自動追加を設定しています。
 
 #### ステップ 5: Frontend Fargate サービスの構築
 
-1. `bin/ecs-handson.ts` を開き、`BackendHelloStack` の後に `FrontendStack` を追加:
+1. `bin/handson.ts` を開き、`BackendHelloStack` の後に `FrontendStack` を追加:
 
     ```typescript
     import { FrontendStack } from '../lib/frontend';
@@ -406,9 +407,9 @@ Cloud Mapの内部用DNSとインスタンスの自動追加を設定してい�
     cd ..
 
     docker tag backend-chat:latest `
-      $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${env:OWNER}-backend-chat:latest
+      "$env:AWS_ACCOUNT_ID.dkr.ecr.$env:AWS_REGION.amazonaws.com/${env:OWNER}-backend-chat:latest"
 
-    docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${env:OWNER}-backend-chat:latest"
+    docker push "$env:AWS_ACCOUNT_ID.dkr.ecr.$env:AWS_REGION.amazonaws.com/${env:OWNER}-backend-chat:latest"
     ```
 
 1. **bin/handson.ts にBackendChatStackを追加**
@@ -446,7 +447,7 @@ Cloud Mapの内部用DNSとインスタンスの自動追加を設定してい�
       cluster: backendStack.cluster,
       cloudMapNamespace: backendStack.cloudMapNamespace,
       backendServiceName: backendServiceName,
-      backendChatServiceName: backendChatStack.backendChatServiceName, // 追加
+      backendChatServiceName: backendChatServiceName, // 追加
     });
     ```
 
@@ -463,7 +464,18 @@ Cloud Mapの内部用DNSとインスタンスの自動追加を設定してい�
     npx cdk deploy $env:OWNER-BackendChatStack $env:OWNER-FrontendStack
     ```
 
-#### Appendix:
+### 全部消そう
+CDKコードはCloudForamtionのスタックとしてAWS上で管理されています。  
+スタックを削除するとその構成リソースも全て削除されるため、簡単に不要リソースを処分できます。
+
+#### 削除コマンド
+```bash
+cd cdk
+echo y | npx cdk destroy --all
+```
+
+お疲れさまでした。
+### Appendix:
 このハンズオンを実施する時点でDingチャットの認証情報はAWS Secrets Managerに保存されている。
 
 1. シークレットの確認

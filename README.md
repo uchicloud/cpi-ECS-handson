@@ -139,7 +139,7 @@ $env:AWS_REGION=$(aws configure get region)
     *Windows*
     ```pwsh
     aws ecr get-login-password --region $env:AWS_REGION |
-    docker login --username AWS --password-stdin $env:AWS_ACCOUNT_ID.dkr.ecr.$env:AWS_REGION.amazonaws.com
+    docker login --username AWS --password-stdin "$env:AWS_ACCOUNT_ID.dkr.ecr.$env:AWS_REGION.amazonaws.com"
     ```
 
 3. イメージをビルド
@@ -164,7 +164,7 @@ $env:AWS_REGION=$(aws configure get region)
     docker tag backend-hello:latest `
       $env:AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${env:OWNER}-backend-hello:latest
 
-    docker push $env:AWS_ACCOUNT_ID.dkr.ecr.$env:AWS_REGION.amazonaws.com/${env:OWNER}-backend-hello:latest
+    docker push "$env:AWS_ACCOUNT_ID.dkr.ecr.$env:AWS_REGION.amazonaws.com/${env:OWNER}-backend-hello:latest"
     ```
 
 ### フロントエンドのコンテナイメージをECRにプッシュしてみよう

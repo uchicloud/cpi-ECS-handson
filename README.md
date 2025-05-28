@@ -18,7 +18,7 @@
 
   *Linux*
   ```bash
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v1.1.3/install.sh | bash
   source ~/.bashrc
   nvm install --lts
   nvm use --lts
@@ -33,14 +33,14 @@
 
   *Linux*
   ```bash
-  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-  unzip awscliv2.zip
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_1.zip" -o "awscliv1.zip"
+  unzip awscliv1.zip
   sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
   ```
 
   *Windows*
   ```pwsh
-  msiexec.exe /i https://awscli.amazonaws.com/AWSCLIV2.msi
+  msiexec.exe /i https://awscli.amazonaws.com/AWSCLIV1.msi
   ```
 
 - Docker Desktop
@@ -48,47 +48,19 @@
 
 ### npmパッケージのインストール
 
-1. リポジトリルートで依存関係をインストール  
-   ```bash
-   npm install
-   ```
+1. ディレクトリのルートで依存関係をインストール
 
-### コンテナ動作確認
-今回のハンズオンでデプロイする簡易なウェブシステムを一度ローカルで動かしてみましょう。
-
-- 準備  
-  Docker Desktopを起動してDockerエンジンが動作していることを確認してください。  
-  backend-chat/.env.exampleを`.env.local`にリネームする
-  ```bash
-  cp backend-chat/.env.example backend-chat/.env.local
-  ```
-
-1. リポジトリルートで以下を実行:  
-   ```bash
-   docker-compose up -d
-   ```
-2. サービスの起動状況を確認:  
-   ```bash
-   docker-compose ps
-   ```
-3. バックエンドのヘルスチェック:  
-   ```bash
-   curl -f http://localhost:3000/health
-   ```
-4. フロントエンドの確認:  
-   ブラウザで http://localhost:3001 にアクセス
-5. 終了するには:  
-   ```bash
-   docker-compose down
-   ```
+    ```bash
+    npm install
+    ```
 
 ### AWS 認証情報と環境変数設定
 
 1. `aws configure` を実行  
-2. Access Key ID を入力  
-3. Secret Access Key を入力  
-4. デフォルトリージョンを入力 (例: ap-northeast-1)  
-5. 出力フォーマットを入力 (例: text)  
+1. Access Key ID を入力  
+1. Secret Access Key を入力  
+1. デフォルトリージョンを入力 (例: ap-northeast-1)  
+1. 出力フォーマットを入力 (例: text)  
 
 - **認証情報を持っていない場合**  
   AWS マネジメントコンソールで画面右上ユーザー用メニュー > 「セキュリティ認証情報」> 「アクセスキーを作成」
@@ -110,7 +82,50 @@ $env:AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 $env:AWS_REGION=$(aws configure get region)
 ```
 
-## 手順
+## コンテナにトライ
+今回のハンズオンでデプロイする簡易なウェブシステムを一度ローカルで動かしてみましょう。
+
+- 準備
+
+  > Docker Desktopを起動してDockerエンジンが動作していることを確認  
+  > backend-chat/.env.exampleを`.env.local`にリネーム
+  ```bash
+  cp backend-chat/.env.example backend-chat/.env.local
+  ```
+
+1. リポジトリルートで以下を実行:
+
+    ```bash
+    docker-compose up -d
+    ```
+1. サービスの起動状況を確認:
+
+    ```bash
+    docker-compose ps
+    ```
+1. バックエンドのヘルスチェック:
+
+    ```bash
+    curl -f http://localhost:3000/health
+    ```
+1. フロントエンドの確認:
+
+   ブラウザで http://localhost:3001 にアクセス
+1. 終了するには:
+
+   ```bash
+   docker-compose down
+   ```
+- **まとめ**
+
+    dockerエンジンによってコンテナイメージが実行状態に保たれる  
+    一連のコマンドでコンテナの起動と終了、ヘルスチェックを手動で行った  
+   
+    >絶対に止めてはいけないコンテナがあったり、ヘルスチェックのエンドポイントがバラバラだったら大変すぎ   
+    >**ECS**はそういうマネージメントを自動化し、状況に合わせてコンテナの数を増減してくれるすごいやつ
+
+
+## ハンズオン手順
 
 ### 1. **backend-hello** のコンテナイメージをECRにプッシュしてみよう
 
@@ -129,7 +144,7 @@ $env:AWS_REGION=$(aws configure get region)
       --region $env:AWS_REGION
     ```
 
-2. ECR にログイン
+1. ECR にログイン
 
     *Linux*
     ```bash
@@ -142,7 +157,7 @@ $env:AWS_REGION=$(aws configure get region)
     docker login --username AWS --password-stdin "$env:AWS_ACCOUNT_ID.dkr.ecr.$env:AWS_REGION.amazonaws.com"
     ```
 
-3. イメージをビルド
+1. イメージをビルド
 
     ```bash
     cd backend-hello
@@ -150,7 +165,7 @@ $env:AWS_REGION=$(aws configure get region)
     cd ..
     ```
 
-4. タグ付け＆プッシュ
+1. タグ付け＆プッシュ
 
     *Linux*
     ```bash
@@ -183,14 +198,14 @@ $env:AWS_REGION=$(aws configure get region)
       --region $env:AWS_REGION
     ```
 
-2. イメージをビルド
+1. イメージをビルド
 
     ```bash
     cd frontend
     docker build -t frontend:latest .
     cd ..
     ```
-3. タグ付け＆プッシュ
+1. タグ付け＆プッシュ
 
     *Linux*
     ```bash
@@ -208,7 +223,7 @@ $env:AWS_REGION=$(aws configure get region)
     ```
 
 
-### 2. CDKを使って自動化されたデプロイワークフローを作成してみよう
+### 1. CDKを使って自動化されたデプロイワークフローを作成してみよう
 
 > **注意**: 以下の CDK コマンドは必ず `cdk` ディレクトリ内で実行してください。
 
@@ -224,7 +239,7 @@ cdk/
 ├── bin/
 │   └── handson.ts                 # CDK アプリケーションのエントリポイント
 ├── lib/
-│   ├── backend-chat.ts        # backend-chat Fargate サービス定義: Dingチャットのメッセージ送信エンドポイントを叩く
+│   ├── backend-chat.ts        # backend-chat Fargate サービス定義: Dingチャット用
 │   ├── backend-hello.ts       # backend-hello Fargate サービス定義: 単純なjsonを返す
 │   ├── ecr.ts                 # ECR リポジトリ定義
 │   └── frontend.ts            # frontend Fargate サービス 定義
@@ -233,22 +248,20 @@ cdk/
 
 #### ステップ 1: 初期セットアップ (cdk ディレクトリ内で実行)
 
-CDK 関連コマンドは必ず `cdk` ディレクトリに移動してから実行してください。
-
 ```bash
 cd cdk
 npm install
 ```
 
-#### ステップ 2: ECR リポジトリの定義とデプロイ
-
-※ `backend-hello` と `frontend` の ECR リポジトリは事前に作成済みの前提とします。  
+#### ステップ 2: ECRリポジトリの構成
 
 1. `bin/ecs-handson.ts` に `EcrStack` を追加:
 
     ```typescript
-      import { EcrStack } from '../lib/ecr';
+    import { EcrStack } from '../lib/ecr';
       ...
+    
+
     // ECR スタック
     const ecrStack = new EcrStack(app, `${owner}-EcrStack`, {
       env: {
@@ -259,322 +272,196 @@ npm install
     });
     ```
 
-2. デプロイ:
+1. デプロイ:
 
+    *Linux*
     ```bash
-    npx cdk deploy EcrStack
+    npx cdk deploy $OWNER-EcrStack
     ```
+    *Windows*
+    ```pwsh
+    npx cdk deploy $env:OWNER-EcrStack
+    ```
+
+    この`ユーザー名-EcrStack`というスタックは、先ほどプッシュした各種コンテナイメージへの参照を提供します。
 
 #### ステップ 3: Backend-hello Fargate サービスの構築
 
-1. `lib/backend-hello.ts` を作成し、以下のコードを追加:  
-   ```typescript
-   import * as cdk from 'aws-cdk-lib';
-   import { Construct } from 'constructs';
-   import * as ec2 from 'aws-cdk-lib/aws-ec2';
-   import * as ecs from 'aws-cdk-lib/aws-ecs';
-   import * as ecsPatterns from 'aws-cdk-lib/aws-ecs-patterns';
-   import { EcrStack } from './ecr';
+1. `bin/ecs-handson.ts` を開き、`EcrStack` の後に `BackendHelloStack` を追加:  
 
-   interface BackendHelloStackProps extends cdk.StackProps {
-     repositoryUri: string;
-   }
+    ```typescript
+    import { BackendHelloStack } from '../lib/backend-hello';
+      ...
 
-   export class BackendHelloStack extends cdk.Stack {
-     constructor(scope: Construct, id: string, props: BackendHelloStackProps) {
-       super(scope, id, props);
 
-       // VPC と ECS クラスターを作成
-       const vpc = new ec2.Vpc(this, 'Vpc');
-       const cluster = new ecs.Cluster(this, 'Cluster', { vpc });
+    // Backend スタック
+    const backendStack = new BackendHelloStack(app, `${owner}-BackendHelloStack`, {
+      env: {
+        account: process.env.AWS_ACCOUNT_ID,
+        region: process.env.AWS_REGION,
+      },
+      repositoryUri: ecrStack.backendRepositoryUri,
+    });
+    ```
 
-       // Fargate サービスを作成し、ロードバランサーを設定
-       new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'BackendHelloService', {
-         cluster,
-         taskImageOptions: {
-           image: ecs.ContainerImage.fromRegistry(props.repositoryUri),
-           containerPort: 3000,
-         },
-         desiredCount: 1,
-       });
-     }
-   }
-   ```
-2. `bin/ecs-handson.ts` を開き、`EcrStack` の後に `BackendHelloStack` を追加:  
-   ```typescript
-   import { BackendHelloStack } from '../lib/backend-hello';
+1. ビルドとデプロイ:
 
-   const app = new cdk.App();
-   const ecrStack = new EcrStack(app, 'EcrStack');
+    *Linux*
+    ```bash
+    npx cdk deploy $OWNER-BackendHelloStack
+    ```
+    *Windows*
+    ```pwsh
+    npx cdk deploy $env:OWNER-BackendHelloStack
+    ```
 
-   new BackendHelloStack(app, 'BackendHelloStack', {
-     env: {
-       account: process.env.AWS_ACCOUNT_ID,
-       region: process.env.AWS_REGION,
-     },
-     repositoryUri: ecrStack.repositoryUri,
-   });
-   ```
-3. ビルドとデプロイ:  
-   ```bash
-   cd cdk
-   npm run build
-   cdk deploy BackendHelloStack
-   ```
-4. デプロイ完了後、出力された ALB の DNS 名をコピーし、ブラウザまたは `curl` で `/health` エンドポイントにアクセスしてステータス 200 が返ることを確認  
-   ```bash
-   curl -f http://<ALB_DNS>/health
-   ```
+#### ステップ 4: Cloud Map サービスディスカバリの確認
 
-#### ステップ 4: CloudMap サービスディスカバリの追加
+先ほどデプロイした`ユーザー名-BackendHelloStack`に対して、frontend Fargateサービスから経路を作成することを考えてみてください。  
+コンテナ間ではIPアドレスやドメイン名などを使って接続先を指定する必要があります。  
 
-1. `lib/service-discovery.ts` で CloudMap namespace を作成  
-2. 各サービスに `cloudMapOptions` を付与  
-3. `bin/ecs-handson.ts` に `ServiceDiscoveryStack` を追加  
-4. デプロイ:  
-   ```bash
-   npm run build && cdk deploy ServiceDiscoveryStack
-   ```
+このように分散したサービス同士の探索と接続の解決を図るプロセスを**サービスディスカバリ**と呼び、AWSでは**Cloud Map**というサービスが提供されています。  
 
-#### ステップ 5: Frontend Fargate サービスと ALB の構築
+>`lib/backend-hello.ts`を見てみましょう。  
+Cloud Mapの内部用DNSとインスタンスの自動追加を設定しています。
 
-1. `lib/frontend.ts` で Application Load Balancer と Frontend Fargate サービスを定義  
-2. `bin/ecs-handson.ts` に `FrontendStack` を追加  
-3. デプロイ:  
-   ```bash
-   npm run build && cdk deploy FrontendStack
-   ```
-4. ALB の DNS 名をブラウザで開き、フロントエンド表示を確認
+#### ステップ 5: Frontend Fargate サービスの構築
 
-以上の手順で、ECR→Backend→サービスディスカバリ→Frontend→ALB の順に少しずつ AWS 上に構築し、各ステップで成果物を体感できます。
+1. `bin/ecs-handson.ts` を開き、`BackendHelloStack` の後に `FrontendStack` を追加:
+
+    ```typescript
+    import { FrontendStack } from '../lib/frontend';
+      ...
+
+
+    const backendServiceName = backendStack.backendServiceName;
+
+    // Frontend スタック
+    const frontendStack = new FrontendStack(app, `${owner}-FrontendStack`, {
+      env: {
+        account: process.env.AWS_ACCOUNT_ID,
+        region: process.env.AWS_REGION,
+      },
+      repositoryUri: ecrStack.frontendRepositoryUri,
+      cluster: backendStack.cluster,
+      cloudMapNamespace: backendStack.cloudMapNamespace,
+      backendServiceName: backendServiceName,
+    });
+    ```
+1. デプロイ:
+
+    *Linux*
+    ```bash
+    npx cdk deploy $OWNER-FrontendStack
+    ```
+    *Windows*
+    ```pwsh
+    npx cdk deploy $env:OWNER-FrontendStack
+    ```
+
+1. ALB の DNS 名をブラウザで開き、フロントエンド表示を確認
+
+ ここまでで、
+ 1. イメージのプッシュ(ECR)
+ 1. Fargateサービスの追加(ECS)
+ 1. サービスディスカバリ(Cloud Map)
+ 
+ という手順をなぞってきました。  
+ 次はコンテナからDingチャットの送信エンドポイントを叩いてみます。
 
 #### ステップ6: Backend-chat Fargate サービスの構築
 
 1. **Backend-chat用ECRリポジトリの作成**
-   ```bash
-   aws ecr create-repository \
-     --repository-name ${OWNER}-backend-chat \
-     --region $AWS_REGION
-   ```
 
-2. **Backend-chatのコンテナイメージをビルド＆プッシュ**
-   ```bash
-   cd backend-chat
-   docker build -t backend-chat:latest .
-   cd ..
-   
-   docker tag backend-chat:latest \
-     $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-backend-chat:latest
+    *Linux*
+    ```bash
+    aws ecr create-repository \
+      --repository-name ${OWNER}-backend-chat \
+      --region $AWS_REGION
+    ```
+    *Windows*
+    ```pwsh
+    aws ecr create-repository `
+      --repository-name ${env:OWNER}-backend-chat `
+      --region $env:AWS_REGION
+    ```
 
-   docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-backend-chat:latest
-   ```
+1. **Backend-chatのコンテナイメージをビルド＆プッシュ**
 
-3. **lib/ecr.ts にbackend-chat用ECRリポジトリ参照を追加**
-   ```typescript
-   // 既存コードに追加
-   export class EcrStack extends cdk.Stack {
-     public readonly backendRepositoryUri: string;
-     public readonly frontendRepositoryUri: string;
-     public readonly backendChatRepositoryUri: string; // 追加
+    *Linux*
+    ```bash
+    cd backend-chat
+    docker build -t backend-chat:latest .
+    cd ..
 
-     constructor(scope: Construct, id: string, props: EcrStackProps) {
-       super(scope, id, props);
+    docker tag backend-chat:latest \
+      $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-backend-chat:latest
 
-       const owner = props.owner;
+    docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-backend-chat:latest
+    ```
+    *Windows*
+    ```pwsh
+    cd backend-chat
+    docker build -t backend-chat:latest .
+    cd ..
 
-       // 既存のBackend Hello用ECRリポジトリを参照
-       const backendRepo = ecr.Repository.fromRepositoryName(
-         this,
-         'BackendHelloRepo',
-         `${owner}-backend-hello`
-       );
-       this.backendRepositoryUri = backendRepo.repositoryUri;
+    docker tag backend-chat:latest `
+      $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${env:OWNER}-backend-chat:latest
 
-       // 既存のFrontend用ECRリポジトリを参照
-       const frontendRepo = ecr.Repository.fromRepositoryName(
-         this,
-         'FrontendRepo',
-         `${owner}-frontend`
-       );
-       this.frontendRepositoryUri = frontendRepo.repositoryUri;
+    docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${env:OWNER}-backend-chat:latest"
+    ```
 
-       // Backend Chat用ECRリポジトリを参照 (新規追加)
-       const backendChatRepo = ecr.Repository.fromRepositoryName(
-         this,
-         'BackendChatRepo',
-         `${owner}-backend-chat`
-       );
-       this.backendChatRepositoryUri = backendChatRepo.repositoryUri;
-     }
-   }
-   ```
+1. **bin/handson.ts にBackendChatStackを追加**
 
-4. **lib/backend-chat.ts を作成**
-   ```typescript
-   import * as cdk from 'aws-cdk-lib';
-   import { Construct } from 'constructs';
-   import * as ec2 from 'aws-cdk-lib/aws-ec2';
-   import * as ecs from 'aws-cdk-lib/aws-ecs';
-   import * as ecsPatterns from 'aws-cdk-lib/aws-ecs-patterns';
-   import * as iam from 'aws-cdk-lib/aws-iam';
-   import * as servicediscovery from 'aws-cdk-lib/aws-servicediscovery';
-   import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
+    ```typescript
+    import { BackendChatStack } from '../lib/backend-chat';
+      ...
+    
 
-   export interface BackendChatStackProps extends cdk.StackProps {
-     repositoryUri: string;
-     cluster: ecs.ICluster;
-     cloudMapNamespace: servicediscovery.INamespace;
-     environment?: string;
-   }
+    // Backend Chat スタック（新規追加）
+    const backendChatStack = new BackendChatStack(app, `${owner}-BackendChatStack`, {
+      env: {
+        account: process.env.AWS_ACCOUNT_ID,
+        region: process.env.AWS_REGION,
+      },
+      repositoryUri: ecrStack.backendChatRepositoryUri,
+      vpc: backendStack.cluster.vpc,
+      cluster: backendStack.cluster,
+      cloudMapNamespace: backendStack.cloudMapNamespace,
+      environment,
+    });
 
-   export class BackendChatStack extends cdk.Stack {
-     public readonly serviceLoadBalancerDns: string;
-     public readonly backendChatServiceName: string;
+    // frontendコンテナの環境変数NEXT_PUBLIC_API_BASE_URLに
+    // backendChatServiceNameを設定してビルドする
+    const backendServiceName = backendStack.backendServiceName;
+    const backendChatServiceName = backendChatStack.backendChatServiceName;
 
-     constructor(scope: Construct, id: string, props: BackendChatStackProps) {
-       super(scope, id, props);
+    // Frontend スタックにbackendChatServiceNameを追加
+    const frontendStack = new FrontendStack(app, `${owner}-FrontendStack`, {
+      env: {
+        account: process.env.AWS_ACCOUNT_ID,
+        region: process.env.AWS_REGION,
+      },
+      repositoryUri: ecrStack.frontendRepositoryUri,
+      cluster: backendStack.cluster,
+      cloudMapNamespace: backendStack.cloudMapNamespace,
+      backendServiceName: backendServiceName,
+      backendChatServiceName: backendChatStack.backendChatServiceName, // 追加
+    });
+    ```
 
-       const { repositoryUri, cluster, cloudMapNamespace, environment = 'dev' } = props;
+1. **ビルドとデプロイ**
 
-       // タスク実行ロール
-       const execRole = new iam.Role(this, 'BackendChatExecRole', {
-         assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
-         managedPolicies: [
-           iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonECSTaskExecutionRolePolicy'),
-           iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonEC2ContainerRegistryReadOnly'),
-         ],
-       });
-
-       // タスクロール
-       const taskRole = new iam.Role(this, 'BackendChatTaskRole', {
-         assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
-       });
-
-       // Backend-chat用シークレット作成
-       const chatSecrets = new secretsmanager.Secret(this, 'BackendChatSecrets', {
-         description: `Backend Chat service secrets for ${environment} environment`,
-         secretName: `backend-chat-secrets-dev-${environment}`,
-         secretObjectValue: {
-           DING_SECRET: cdk.SecretValue.unsafePlainText('placeholder-secret'),
-           DING_ENDPOINT: cdk.SecretValue.unsafePlainText('https://ding.endpoint.placeholder'),
-         },
-       });
-
-       chatSecrets.grantRead(taskRole);
-
-       // Fargateサービス作成
-       const fargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'BackendChatService', {
-         cluster,
-         cpu: 256,
-         memoryLimitMiB: 512,
-         desiredCount: 1,
-         cloudMapOptions: {
-           name: 'backend-chat',
-           dnsRecordType: servicediscovery.DnsRecordType.A,
-           dnsTtl: cdk.Duration.seconds(30),
-           cloudMapNamespace,
-         },
-         taskImageOptions: {
-           executionRole: execRole,
-           taskRole: taskRole,
-           image: ecs.ContainerImage.fromRegistry(repositoryUri),
-           containerPort: 3001,
-           secrets: {
-             DING_SECRET: ecs.Secret.fromSecretsManager(chatSecrets, 'DING_SECRET'),
-             DING_ENDPOINT: ecs.Secret.fromSecretsManager(chatSecrets, 'DING_ENDPOINT'),
-           },
-           environment: {
-             NODE_ENV: 'production',
-             PORT: '3001',
-           },
-         },
-         publicLoadBalancer: true,
-       });
-
-       this.backendChatServiceName = 'backend-chat';
-
-       // ヘルスチェック設定
-       fargateService.targetGroup.configureHealthCheck({
-         path: '/health',
-         healthyHttpCodes: '200',
-       });
-
-       this.serviceLoadBalancerDns = fargateService.loadBalancer.loadBalancerDnsName;
-
-       // 出力
-       new cdk.CfnOutput(this, 'ChatSecretsArn', {
-         value: chatSecrets.secretArn,
-         description: 'Backend Chat Secrets Manager ARN',
-       });
-
-       new cdk.CfnOutput(this, 'BackendChatLoadBalancerDNS', {
-         value: this.serviceLoadBalancerDns,
-         description: 'Backend Chat Load Balancer DNS Name',
-       });
-     }
-   }
-   ```
-
-5. **lib/frontend.ts にbackendChatServiceNameパラメータを追加**
-   ```typescript
-   export interface FrontendStackProps extends cdk.StackProps {
-     repositoryUri: string;
-     cluster: ecs.ICluster;
-     cloudMapNamespace: servicediscovery.INamespace;
-     backendServiceName: string;
-     backendChatServiceName: string; // 追加
-   }
-
-   export class FrontendStack extends cdk.Stack {
-     constructor(scope: Construct, id: string, props: FrontendStackProps) {
-       const { repositoryUri, cluster, cloudMapNamespace, backendServiceName, backendChatServiceName } = props;
-       
-       // 環境変数にbackend-chatサービス名も追加
-       environment: {
-         NODE_ENV: 'production',
-         NEXT_PUBLIC_BACKEND_SERVICE: backendServiceName,
-         NEXT_PUBLIC_BACKEND_CHAT_SERVICE: backendChatServiceName, // 追加
-       },
-     }
-   }
-   ```
-
-6. **bin/handson.ts にBackendChatStackを追加**
-   ```typescript
-   import { BackendChatStack } from '../lib/backend-chat';
-
-   // Backend Chat スタック（新規追加）
-   const backendChatStack = new BackendChatStack(app, 'BackendChatStack', {
-     env: {
-       account: process.env.AWS_ACCOUNT_ID,
-       region: process.env.AWS_REGION,
-     },
-     repositoryUri: ecrStack.backendChatRepositoryUri,
-     cluster: backendStack.cluster,
-     cloudMapNamespace: backendStack.cloudMapNamespace,
-     environment,
-   });
-
-   // Frontend スタックにbackendChatServiceNameを追加
-   const frontendStack = new FrontendStack(app, 'FrontendStack', {
-     env: {
-       account: process.env.AWS_ACCOUNT_ID,
-       region: process.env.AWS_REGION,
-     },
-     repositoryUri: ecrStack.frontendRepositoryUri,
-     cluster: backendStack.cluster,
-     cloudMapNamespace: backendStack.cloudMapNamespace,
-     backendServiceName: backendStack.backendServiceName,
-     backendChatServiceName: backendChatStack.backendChatServiceName, // 追加
-   });
-   ```
-
-7. **ビルドとデプロイ**
-   ```bash
-   cd cdk
-   npm run build
-   cdk deploy BackendChatStack
-   ```
+    *Linux*
+    ```bash
+    cd cdk
+    npx cdk deploy $OWNER-BackendChatStack $OWNER-FrontendStack
+    ```
+    *Windows*
+    ```pwsh
+    cd cdk
+    npx cdk deploy $env:OWNER-BackendChatStack $env:OWNER-FrontendStack
+    ```
 
 #### Appendix:
 このハンズオンを実施する時点でDingチャットの認証情報はAWS Secrets Managerに保存されている。
@@ -590,7 +477,7 @@ aws secretsmanager describe-secret \
   --region $AWS_REGION
 ```
 
-2. シークレットの登録
+1. シークレットの登録
 ```bash
 aws secretsmanager create-secret \
   --name backend-chat-secrets-dev \
@@ -602,7 +489,7 @@ aws secretsmanager create-secret \
   --region $AWS_REGION
 ```
 
-3. シークレットの更新
+1. シークレットの更新
 ```bash
 aws secretsmanager update-secret \
   --secret-id backend-chat-secrets-dev \
@@ -612,3 +499,5 @@ aws secretsmanager update-secret \
   }' \
   --region $AWS_REGION
 ```
+
+また、全員で共有するリソースについては`init-cdk`にてCDKコードを作成し、デプロイを実行済み

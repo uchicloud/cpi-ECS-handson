@@ -13,11 +13,9 @@ export default function SendChat() {
       },
       body: JSON.stringify({ message }),
     });
-    const json = await reply.json();
-    if (!json.reply) {
-      throw new Error("No reply received from chat API");
-    }
-    setReply(json.reply);
+    const res = await reply.json();
+    console.log("Received from api/chat:", res);
+    setReply(res.reply || "No reply received");
     setMessage("");
   }
 

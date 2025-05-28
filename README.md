@@ -40,7 +40,7 @@
 
   *Windows*
   ```pwsh
-  winget install --id Amazon.AWSCLI
+  msiexec.exe /i https://awscli.amazonaws.com/AWSCLIV2.msi
   ```
 
 - Docker Desktop
@@ -95,28 +95,18 @@
 
 *Linux*
 ```bash
-export OWNER=<自分とわかる文字列>    # ECRリポジトリ名のプレフィックス
-```
-*Windows*
-```pwsh
-$env:OWNER="<自分とわかる文字列>"
-```
+export OWNER=<自分とわかる文字列>
 
-*Linux*
-```bash
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-```
-*Windows*
-```pwsh
-$env:AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-```
 
-*Linux*
-```bash
 export AWS_REGION=$(aws configure get region)
 ```
 *Windows*
 ```pwsh
+$env:OWNER="<自分とわかる文字列>"
+
+$env:AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
 $env:AWS_REGION=$(aws configure get region)
 ```
 

@@ -10,4 +10,3 @@ if (!owner) {
 }
 
 const environment = process.env.ENVIRONMENT || 'dev';
-

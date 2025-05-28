@@ -473,6 +473,7 @@ CDKコードはCloudForamtionのスタックとしてAWS上で管理されてい
 cd cdk
 echo y | npx cdk destroy --all
 ```
+>自分のECRリポジトリの削除
 
 お疲れさまでした。
 ### Appendix:

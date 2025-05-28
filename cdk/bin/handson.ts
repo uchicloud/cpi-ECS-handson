@@ -17,7 +17,7 @@ if (!owner) {
 const environment = process.env.ENVIRONMENT || 'dev';
 
 // ECR スタック
-const ecrStack = new EcrStack(app, 'EcrStack', {
+const ecrStack = new EcrStack(app, `${owner}-EcrStack`, {
   env: {
     account: process.env.AWS_ACCOUNT_ID,
     region: process.env.AWS_REGION,
@@ -26,7 +26,7 @@ const ecrStack = new EcrStack(app, 'EcrStack', {
 });
 
 // Backend スタック
-const backendStack = new BackendHelloStack(app, 'BackendStack', {
+const backendStack = new BackendHelloStack(app, `${owner}-BackendStack`, {
   env: {
     account: process.env.AWS_ACCOUNT_ID,
     region: process.env.AWS_REGION,
@@ -35,12 +35,13 @@ const backendStack = new BackendHelloStack(app, 'BackendStack', {
 });
 
 // Backend Chat スタック（新規追加）
-const backendChatStack = new BackendChatStack(app, 'BackendChatStack', {
+const backendChatStack = new BackendChatStack(app, `${owner}-BackendChatStack`, {
   env: {
     account: process.env.AWS_ACCOUNT_ID,
     region: process.env.AWS_REGION,
   },
   repositoryUri: ecrStack.backendChatRepositoryUri,
+  vpc: backendStack.cluster.vpc,
   cluster: backendStack.cluster,
   cloudMapNamespace: backendStack.cloudMapNamespace,
   environment,
@@ -50,36 +51,17 @@ const backendChatStack = new BackendChatStack(app, 'BackendChatStack', {
 // backendChatServiceNameを設定してビルドする
 const backendServiceName = backendStack.backendServiceName;
 const backendChatServiceName = backendChatStack.backendChatServiceName;
-const frontendImage = ecs.ContainerImage.fromAsset('../frontend', {
-  buildArgs: {
-    // ビルド時にbackend-chatサービス名を注入
-    NEXT_PUBLIC_API_BASE_URL: `http://${backendChatServiceName}:3001`,
-    NEXT_PUBLIC_BACKEND_SERVICE: backendServiceName,
-    NEXT_PUBLIC_BACKEND_CHAT_SERVICE: backendChatServiceName,
-  },
-});
 
 // Frontend スタック
-const frontendStack = new FrontendStack(app, 'FrontendStack', {
+const frontendStack = new FrontendStack(app, `${owner}-FrontendStack`, {
   env: {
     account: process.env.AWS_ACCOUNT_ID,
     region: process.env.AWS_REGION,
   },
-  image: frontendImage,
   repositoryUri: ecrStack.frontendRepositoryUri,
   cluster: backendStack.cluster,
   cloudMapNamespace: backendStack.cloudMapNamespace,
-  backendServiceName: backendStack.backendServiceName,
+  backendServiceName: backendServiceName,
+  backendChatServiceName: backendChatServiceName,
 });
 
-// 出力: Backend と Frontend の ALB DNS 名
-// new cdk.CfnOutput(app, 'BackendLoadBalancerDns', {
-//   value: backendStack.serviceLoadBalancerDns,
-//   description: 'Backend Hello Fargate Service Load Balancer DNS',
-//   exportName: 'BackendLoadBalancerDns',
-// });
-// new cdk.CfnOutput(app, 'FrontendLoadBalancerDns', {
-//   value: frontendStack.serviceLoadBalancerDns,
-//   description: 'Frontend Fargate Service Load Balancer DNS',
-//   exportName: 'FrontendLoadBalancerDns',
-// });

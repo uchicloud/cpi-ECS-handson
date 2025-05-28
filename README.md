@@ -389,7 +389,7 @@ npm install
        // Backend-chat用シークレット作成
        const chatSecrets = new secretsmanager.Secret(this, 'BackendChatSecrets', {
          description: `Backend Chat service secrets for ${environment} environment`,
-         secretName: `backend-chat-secrets-${environment}`,
+         secretName: `backend-chat-secrets-dev-${environment}`,
          secretObjectValue: {
            DING_SECRET: cdk.SecretValue.unsafePlainText('placeholder-secret'),
            DING_ENDPOINT: cdk.SecretValue.unsafePlainText('https://ding.endpoint.placeholder'),
@@ -512,26 +512,9 @@ npm install
    cdk deploy BackendChatStack
    ```
 
-8. **シークレットの実際の値を設定**
-   ```bash
-   aws secretsmanager update-secret \
-     --secret-id backend-chat-secrets-dev \
-     --secret-string '{
-       "DING_SECRET": "your-actual-ding-secret",
-       "DING_ENDPOINT": "https://your-actual-ding-endpoint"
-     }' \
-     --region $AWS_REGION
-   ```
-
-9. **動作確認**
-   ```bash
-   # Backend-chatのヘルスチェック
-   curl -f http://<BACKEND_CHAT_ALB_DNS>/health
-   ```
-
-これでBackend-chatサービスがSecrets Managerを使用してセキュアに構築され、他のサービスと連携できる状態になります。
-
 #### Appendix:
+このハンズオンを実施する時点でDingチャットの認証情報はAWS Secrets Managerに保存されている。
+
 1. シークレットの確認
 ```bash
 # シークレット一覧を表示
@@ -539,14 +522,14 @@ aws secretsmanager list-secrets --region $AWS_REGION
 
 # 特定のシークレットの詳細を確認
 aws secretsmanager describe-secret \
-  --secret-id backend-chat-secrets \
+  --secret-id backend-chat-secrets-dev \
   --region $AWS_REGION
 ```
 
 2. シークレットの登録
 ```bash
 aws secretsmanager create-secret \
-  --name backend-chat-secrets \
+  --name backend-chat-secrets-dev \
   --description "Backend Chat service secrets for dev environment" \
   --secret-string '{
     "DING_SECRET": "your-actual-ding-secret",
@@ -558,7 +541,7 @@ aws secretsmanager create-secret \
 3. シークレットの更新
 ```bash
 aws secretsmanager update-secret \
-  --secret-id backend-chat-secrets \
+  --secret-id backend-chat-secrets-dev \
   --secret-string '{
     "DING_SECRET": "your-actual-ding-secret",
     "DING_ENDPOINT": "https://your-actual-ding-endpoint"

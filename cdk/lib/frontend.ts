@@ -15,7 +15,7 @@ export interface FrontendStackProps extends cdk.StackProps {
   cloudMapNamespace: servicediscovery.INamespace;
   /** Backend サービス名 (CloudMap 登録時の name) */
   backendServiceName: string;
-  image?: ecs.ContainerImage;
+  backendChatServiceName: string;
 }
 
 export class FrontendStack extends cdk.Stack {
@@ -24,7 +24,7 @@ export class FrontendStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: FrontendStackProps) {
     super(scope, id, props);
 
-    const { repositoryUri, cluster, cloudMapNamespace, backendServiceName } = props; // vpc追加
+    const { repositoryUri, cluster, cloudMapNamespace, backendServiceName, backendChatServiceName } = props; // vpc追加
 
     // タスク実行ロールに ECR プル権限を付与
     const execRole = new iam.Role(this, 'FrontendExecRole', {
@@ -46,10 +46,11 @@ export class FrontendStack extends cdk.Stack {
       },
       taskImageOptions: {
         executionRole: execRole,
-        image: props.image ?? ecs.ContainerImage.fromRegistry(repositoryUri),
+        image: ecs.ContainerImage.fromRegistry(repositoryUri),
         containerPort: 3000,
         environment: {
           NEXT_PUBLIC_API_BASE_URL: `http://${backendServiceName}.${cloudMapNamespace.namespaceName}:3000`,
+          DING_URL: `http://${backendChatServiceName}.${cloudMapNamespace.namespaceName}:3001`,
         },
       },
       publicLoadBalancer: true,
@@ -63,6 +64,11 @@ export class FrontendStack extends cdk.Stack {
 
     // ALB の DNS 名をエクスポート
     this.serviceLoadBalancerDns = fargateService.loadBalancer.loadBalancerDnsName;
-
+    
+    new cdk.CfnOutput(this, 'FrontendServiceLoadBalancerDns', {
+      value: this.serviceLoadBalancerDns,
+      description: 'フロントエンドALBのDNS名',
+      exportName: `${this.stackName}-FrontendServiceLoadBalancerDns`,
+    });
   }
 }

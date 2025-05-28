@@ -9,19 +9,19 @@ import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 
 export interface BackendChatStackProps extends cdk.StackProps {
   repositoryUri: string;
+  vpc: ec2.IVpc;
   cluster: ecs.ICluster;
   cloudMapNamespace: servicediscovery.INamespace;
   environment?: string;
 }
 
 export class BackendChatStack extends cdk.Stack {
-  public readonly serviceLoadBalancerDns: string;
   public readonly backendChatServiceName: string;
 
   constructor(scope: Construct, id: string, props: BackendChatStackProps) {
     super(scope, id, props);
 
-    const { repositoryUri, cluster, cloudMapNamespace, environment = 'dev' } = props;
+    const { repositoryUri, vpc, cluster, cloudMapNamespace, environment = 'dev' } = props;
 
     // タスク実行ロールに ECR プル権限を付与
     const execRole = new iam.Role(this, 'BackendChatExecRole', {
@@ -77,8 +77,13 @@ export class BackendChatStack extends cdk.Stack {
           PORT: '3001',
         },
       },
-      publicLoadBalancer: true,
+      publicLoadBalancer: false,
     });
+    fargateService.service.connections.allowFrom(
+      ec2.Peer.ipv4(vpc.vpcCidrBlock),
+      ec2.Port.tcp(3001),
+      'Allow traffic from VPC to backend service',
+    );
 
     this.backendChatServiceName = 'backend-chat';
 
@@ -90,21 +95,6 @@ export class BackendChatStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(5),
       healthyThresholdCount: 2,
       unhealthyThresholdCount: 3,
-    });
-
-    // ALB の DNS 名をエクスポート
-    this.serviceLoadBalancerDns = fargateService.loadBalancer.loadBalancerDnsName;
-
-    // シークレットのARNを出力（手動更新時の参考用）
-    new cdk.CfnOutput(this, 'ChatSecretsArn', {
-      value: chatSecrets.secretArn,
-      description: 'Backend Chat Secrets Manager ARN',
-    });
-
-    // ALB DNS名を出力
-    new cdk.CfnOutput(this, 'BackendChatLoadBalancerDNS', {
-      value: this.serviceLoadBalancerDns,
-      description: 'Backend Chat Load Balancer DNS Name',
     });
   }
 }

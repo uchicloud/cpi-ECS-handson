@@ -13,6 +13,8 @@ export async function POST(request: Request) {
       );
     }
     const res = await sendMessage(message);
+    console.log('Message sent successfully:', message);
+    
     return NextResponse.json(res);
   } catch (error) {
     console.error('Error in /api/chat:', error);

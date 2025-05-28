@@ -61,7 +61,7 @@ const sendMessage = async (content: string) => {
             console.error('Response body:', errorText);
             throw new Error(`Failed to send message: ${res.status} ${res.statusText}`);
         }
-        
+        console.log('Message sent successfully:', content);
         return res.json();
         
     } catch (error) {

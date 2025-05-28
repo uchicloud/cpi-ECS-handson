@@ -1,35 +1,23 @@
 "use client";
-
 import { useState } from "react";
-
-// 環境変数を定数として定義
-const DING_URL = process.env.NEXT_PUBLIC_DING_URL;
 
 export default function SendChat() {
   const [message, setMessage] = useState("");
   const [reply, setReply] = useState("");
 
   const handleSend = async () => {
-    if (!DING_URL) {
-      console.error("NEXT_PUBLIC_DING_URL is not defined");
-      return;
+    const reply = await fetch('/api/chat', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message }),
+    });
+    const json = await reply.json();
+    if (!json.reply) {
+      throw new Error("No reply received from chat API");
     }
-
-    const res = await fetch(
-      `${DING_URL}/chat`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message }),
-      }
-    );
-    if (!res.ok) {
-      throw new Error("Failed to send chat message");
-    }
-    const data = await res.json();
-    setReply(data.reply);
+    setReply(json.reply);
     setMessage("");
   }
 

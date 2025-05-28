@@ -18,7 +18,11 @@ app.get('/health', (_req, res) => {
 const sendMessage = async (content: string) => {
     const secret = process.env.DING_SECRET;
     let endpoint = process.env.DING_ENDPOINT;
+    
     if (!secret || !endpoint) {
+        console.error('Configuration error: DING_SECRET and DING_ENDPOINT must be set');
+        console.error('DING_SECRET:', secret ? '[SET]' : '[NOT SET]');
+        console.error('DING_ENDPOINT:', endpoint ? endpoint : '[NOT SET]');
         throw new Error('DING_SECRET and DING_ENDPOINT must be set');
     }
 
@@ -33,6 +37,7 @@ const sendMessage = async (content: string) => {
         const now = Date.now();
         endpoint += `&timestamp=${now}&sign=${calcHmac(now)}`;
     }
+    
     const message = {
         msgtype: 'text',
         text: {
@@ -40,19 +45,35 @@ const sendMessage = async (content: string) => {
         }
     };
 
-    const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'charset': 'utf-8',
-        },
-        body: JSON.stringify(message)
-    });
+    try {
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'charset': 'utf-8',
+            },
+            body: JSON.stringify(message)
+        });
 
-    if (!res.ok) {
-        throw new Error(`Failed to send message: ${res.status} ${res.statusText}`);
+        if (!res.ok) {
+            console.error('HTTP Error:', res.status, res.statusText);
+            const errorText = await res.text();
+            console.error('Response body:', errorText);
+            throw new Error(`Failed to send message: ${res.status} ${res.statusText}`);
+        }
+        
+        return res.json();
+        
+    } catch (error) {
+        console.error('Fetch error in sendMessage:');
+        if (error instanceof Error) {
+            console.error('Error message:', error.message);
+            console.error('Stack trace:', error.stack);
+        } else {
+            console.error('Unknown error:', error);
+        }
+        throw error;
     }
-    return res.json();
 }
 
 app.post('/chat', express.json(), async (req, res) => {

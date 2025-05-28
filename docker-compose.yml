@@ -19,12 +19,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        - NEXT_PUBLIC_DING_URL=http://localhost:5200
     ports:
       - "3001:3000"
     environment:
       - NEXT_PUBLIC_API_BASE_URL=http://backend:3000
-    depends_on:
-      backend:
-        condition: service_healthy
+      - DING_URL=http://ding:5200

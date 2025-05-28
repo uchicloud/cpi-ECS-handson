@@ -11,5 +11,8 @@
   },
   "devDependencies": {
     "concurrently": "^7.0.0"
+  },
+  "dependencies": {
+    "cdk": "^2.1016.1"
   }
 }

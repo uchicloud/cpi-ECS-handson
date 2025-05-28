@@ -19,8 +19,14 @@ export class BackendHelloStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BackendHelloStackProps) {
     super(scope, id, props);
 
-    // VPC と ECS クラスターを作成
-    const vpc = new ec2.Vpc(this, 'ECSStudyVPC', { maxAzs: 2, natGateways: 1 });
+      // 共有VPCから値をインポート
+    const vpc = ec2.Vpc.fromLookup(this, 'SharedVpc', {
+      tags: {
+        Name: 'HandsOn-VPC',
+        Project: 'ECS-HandsOn',
+      },
+    });
+    // ECS クラスターを作成
     const cluster = new ecs.Cluster(this, 'BackendCluster', { vpc });
     this.cluster = cluster;
 

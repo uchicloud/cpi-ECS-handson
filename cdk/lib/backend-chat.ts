@@ -37,15 +37,12 @@ export class BackendChatStack extends cdk.Stack {
       assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
     });
 
-    // backend-chat用のシークレットを作成（DING_SECRET, DING_ENDPOINTを含む）
-    const chatSecrets = new secretsmanager.Secret(this, 'BackendChatSecrets', {
-      description: `Backend Chat service secrets for ${environment} environment`,
-      secretName: `backend-chat-secrets-${environment}`,
-      secretObjectValue: {
-        DING_SECRET: cdk.SecretValue.unsafePlainText('placeholder-secret'), // デプロイ後に手動更新
-        DING_ENDPOINT: cdk.SecretValue.unsafePlainText('https://ding.endpoint.placeholder'), // デプロイ後に手動更新
-      },
-    });
+    // backend-chat用の既存シークレットを参照
+    const chatSecrets = secretsmanager.Secret.fromSecretNameV2(
+      this, 
+      'BackendChatSecrets', 
+      `backend-chat-secrets-${environment}`
+    );
 
     // タスクロールにシークレット読み取り権限を付与
     chatSecrets.grantRead(taskRole);

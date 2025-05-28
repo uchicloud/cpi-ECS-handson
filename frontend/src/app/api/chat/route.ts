@@ -14,8 +14,16 @@ export async function POST(request: Request) {
     }
     const res = await sendMessage(message);
     console.log('Message sent successfully:', message);
-    
-    return NextResponse.json(res);
+    console.log('Response:', res.status, res);
+
+    const responseBody = await res.json();
+    if (!responseBody || !responseBody.reply) {
+      return NextResponse.json(
+        { error: 'No reply received from chat service' },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(responseBody, { status: 200 });
   } catch (error) {
     console.error('Error in /api/chat:', error);
     return NextResponse.json(

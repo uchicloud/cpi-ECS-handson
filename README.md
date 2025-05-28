@@ -168,25 +168,45 @@ $env:AWS_REGION=$(aws configure get region)
     ```
 
 ### フロントエンドのコンテナイメージをECRにプッシュしてみよう
-1. ECR リポジトリを作成  
-   ```bash
-   aws ecr create-repository \
-     --repository-name ${OWNER}-frontend \
-     --region $AWS_REGION
-   ```
-2. イメージをビルド  
-   ```bash
-   cd frontend
-   docker build -t frontend:latest .
-   cd ..
-   ```
-3. タグ付け＆プッシュ  
-   ```bash
-   docker tag frontend:latest \
-     $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-frontend:latest
+1. ECR リポジトリを作成
 
-   docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-frontend:latest
-   ```
+    *Linux*
+    ```bash
+    aws ecr create-repository \
+      --repository-name ${OWNER}-frontend \
+      --region $AWS_REGION
+    ```
+    *Windows*
+    ```pwsh
+    aws ecr create-repository `
+      --repository-name ${env:OWNER}-frontend `
+      --region $env:AWS_REGION
+    ```
+
+2. イメージをビルド
+
+    ```bash
+    cd frontend
+    docker build -t frontend:latest .
+    cd ..
+    ```
+3. タグ付け＆プッシュ
+
+    *Linux*
+    ```bash
+    docker tag frontend:latest \
+      $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-frontend:latest
+
+    docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${OWNER}-frontend:latest
+    ```
+    *Windows*
+    ```pwsh
+    docker tag frontend:latest `
+      $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${env:OWNER}-frontend:latest
+
+    docker push "$env:AWS_ACCOUNT_ID.dkr.ecr.$env:AWS_REGION.amazonaws.com/${env:OWNER}-frontend:latest"
+    ```
+
 
 ### 2. CDKを使って自動化されたデプロイワークフローを作成してみよう
 
@@ -202,7 +222,7 @@ $env:AWS_REGION=$(aws configure get region)
 ```
 cdk/
 ├── bin/
-│   └── cdk.ts                 # CDK アプリケーションのエントリポイント
+│   └── handson.ts                 # CDK アプリケーションのエントリポイント
 ├── lib/
 │   ├── backend-chat.ts        # backend-chat Fargate サービス定義: Dingチャットのメッセージ送信エンドポイントを叩く
 │   ├── backend-hello.ts       # backend-hello Fargate サービス定義: 単純なjsonを返す
@@ -224,23 +244,26 @@ npm install
 
 ※ `backend-hello` と `frontend` の ECR リポジトリは事前に作成済みの前提とします。  
 
-1. `bin/ecs-handson.ts` に `EcrStack` を追加:  
-  ```typescript
-   import { EcrStack } from '../lib/ecr';
-   ...
-  // ECR スタック
-  const ecrStack = new EcrStack(app, `${owner}-EcrStack`, {
-    env: {
-      account: process.env.AWS_ACCOUNT_ID,
-      region: process.env.AWS_REGION,
-    },
-    owner,
-  });
-  ```
-3. デプロイ:  
-   ```bash
-   npx cdk deploy EcrStack
-   ```
+1. `bin/ecs-handson.ts` に `EcrStack` を追加:
+
+    ```typescript
+      import { EcrStack } from '../lib/ecr';
+      ...
+    // ECR スタック
+    const ecrStack = new EcrStack(app, `${owner}-EcrStack`, {
+      env: {
+        account: process.env.AWS_ACCOUNT_ID,
+        region: process.env.AWS_REGION,
+      },
+      owner,
+    });
+    ```
+
+2. デプロイ:
+
+    ```bash
+    npx cdk deploy EcrStack
+    ```
 
 #### ステップ 3: Backend-hello Fargate サービスの構築
 

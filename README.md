@@ -9,10 +9,42 @@
 - **frontend**: フロントエンドアプリケーション (作成予定)  
 - **backend-chat**: API サービス (作成予定)
 
-## 準備
-このリポジトリはLinux環境で動かすことを想定しています。  
-WindowsユーザーはWSLの設定を完了させてください。  
-VSCodeで開発する場合は **WSLエクステンション** をインストールしてください。
+## 前提条件
+このドキュメントに記載したコマンドは**bash**または**powershell**での動作を想定しています。  
+コンテナを起動するためWindowsユーザーはWSLの設定を完了させてください。  
+
+### インストール
+- node
+
+  *Linux*
+  ```bash
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+  source ~/.bashrc
+  nvm install --lts
+  nvm use --lts
+  ```
+
+  *Windows*
+  ```pwsh
+  winget install --id OpenJS.NodeJS
+  ```
+
+- aws cli
+
+  *Linux*
+  ```bash
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  unzip awscliv2.zip
+  sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
+  ```
+
+  *Windows*
+  ```pwsh
+  winget install --id Amazon.AWSCLI
+  ```
+
+- Docker Desktop
+  - [Docker公式サイト](https://www.docker.com/products/docker-desktop/)
 
 ### npmパッケージのインストール
 
@@ -22,9 +54,10 @@ VSCodeで開発する場合は **WSLエクステンション** をインスト�
    ```
 
 ### コンテナ動作確認
-今回のハンズオンでデプロイする簡易なウェブシステムを一度ローカルで動かしてみましょう
+今回のハンズオンでデプロイする簡易なウェブシステムを一度ローカルで動かしてみましょう。
 
-- 準備
+- 準備  
+  Docker Desktopを起動してDockerエンジンが動作していることを確認してください。  
   backend-chat/.env.exampleを`.env.local`にリネームする
   ```bash
   cp backend-chat/.env.example backend-chat/.env.local
@@ -49,17 +82,6 @@ VSCodeで開発する場合は **WSLエクステンション** をインスト�
    docker-compose down
    ```
 
-### AWS CLI のインストール
-
-下記の手順で AWS CLI v2 をインストールします。
-
-```bash
-sudo apt install -y unzip
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
-```
-
 ### AWS 認証情報と環境変数設定
 
 1. `aws configure` を実行  
@@ -71,14 +93,31 @@ sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --u
 - **認証情報を持っていない場合**  
   AWS マネジメントコンソールで画面右上ユーザー用メニュー > 「セキュリティ認証情報」> 「アクセスキーを作成」
 
+*Linux*
 ```bash
 export OWNER=<自分とわかる文字列>    # ECRリポジトリ名のプレフィックス
 ```
+*Windows*
+```pwsh
+$env:OWNER="<自分とわかる文字列>"
+```
+
+*Linux*
 ```bash
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 ```
+*Windows*
+```pwsh
+$env:AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+```
+
+*Linux*
 ```bash
 export AWS_REGION=$(aws configure get region)
+```
+*Windows*
+```pwsh
+$env:AWS_REGION=$(aws configure get region)
 ```
 
 ## 手順

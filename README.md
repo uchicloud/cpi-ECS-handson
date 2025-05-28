@@ -10,9 +10,41 @@
 - **backend-chat**: API サービス (作成予定)
 
 ## 前提条件
-このリポジトリはLinux環境で動かすことを想定しています。  
-WindowsユーザーはWSLの設定を完了させてください。  
-VSCodeで開発する場合は **WSLエクステンション** をインストールしてください。
+このドキュメントに記載したコマンドは**bash**または**powershell**での動作を想定しています。  
+コンテナを起動するためWindowsユーザーはWSLの設定を完了させてください。  
+
+### インストール
+- node
+
+  *Linux*
+  ```bash
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+  source ~/.bashrc
+  nvm install --lts
+  nvm use --lts
+  ```
+
+  *Windows*
+  ```pwsh
+  winget install --id OpenJS.NodeJS
+  ```
+
+- aws cli
+
+  *Linux*
+  ```bash
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  unzip awscliv2.zip
+  sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
+  ```
+
+  *Windows*
+  ```pwsh
+  winget install --id Amazon.AWSCLI
+  ```
+
+- Docker Desktop
+  - [Docker公式サイト](https://www.docker.com/products/docker-desktop/)
 
 ### セットアップ
 
@@ -46,11 +78,6 @@ VSCodeで開発する場合は **WSLエクステンション** をインスト�
 
 下記の手順で AWS CLI v2 をインストールします。
 
-```bash
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
-```
 
 ### AWS 認証情報と環境変数設定
 

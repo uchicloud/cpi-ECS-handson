@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import * as ecs from 'aws-cdk-lib/aws-ecs';
 import { EcrStack } from '../lib/ecr';
 import { BackendHelloStack } from '../lib/backend-hello';
 import { BackendChatStack } from '../lib/backend-chat';

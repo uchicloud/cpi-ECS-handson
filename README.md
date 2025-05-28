@@ -163,50 +163,27 @@ cd cdk
 npm install
 ```
 
-1. ECR リポジトリを作成  
-   ```bash
-   aws ecr create-repository \
-     --repository-name ${OWNER}-backend-hello \
-     --region $AWS_REGION
-   ```
-
 #### ステップ 2: ECR リポジトリの定義とデプロイ
 
 ※ `backend-hello` と `frontend` の ECR リポジトリは事前に作成済みの前提とします。  
 
-1. `lib/ecr.ts` を作成し、以下を実装:  
-   ```typescript
-   import * as cdk from 'aws-cdk-lib';
-   import { Construct } from 'constructs';
-   import * as ecr from 'aws-cdk-lib/aws-ecr';
-
-   export class EcrStack extends cdk.Stack {
-     public readonly repositoryUri: string;
-
-     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
-       super(scope, id, props);
-
-       const repo = new ecr.Repository(this, 'BackendHelloRepo', {
-         repositoryName: `${process.env.OWNER}-backend-hello`,
-       });
-       this.repositoryUri = repo.repositoryUri;
-     }
-   }
-   ```
-2. `bin/ecs-handson.ts` に `EcrStack` を追加:  
-   ```typescript
-   import 'source-map-support/register';
-   import * as cdk from 'aws-cdk-lib';
+1. `bin/ecs-handson.ts` に `EcrStack` を追加:  
+  ```typescript
    import { EcrStack } from '../lib/ecr';
-
-   const app = new cdk.App();
-   new EcrStack(app, 'EcrStack');
-   ```
+   ...
+  // ECR スタック
+  const ecrStack = new EcrStack(app, `${owner}-EcrStack`, {
+    env: {
+      account: process.env.AWS_ACCOUNT_ID,
+      region: process.env.AWS_REGION,
+    },
+    owner,
+  });
+  ```
 3. デプロイ:  
    ```bash
-   npm run build && cdk deploy EcrStack
+   npx cdk deploy EcrStack
    ```
-4. 出力された `repositoryUri` を控える
 
 #### ステップ 3: Backend-hello Fargate サービスの構築
 
